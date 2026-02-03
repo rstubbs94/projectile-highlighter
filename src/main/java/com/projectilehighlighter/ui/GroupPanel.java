@@ -41,17 +41,15 @@ public class GroupPanel extends JPanel
 	private static final Icon MINUS_ICON = createMinusIcon();
 	private static final Icon EXPORT_ICON;
 	// Overlay style icons
+	private static final BufferedImage OUTLINE_IMAGE;
+	private static final BufferedImage SHADED_IMAGE;
+	private static final BufferedImage SOLID_IMAGE;
+	private static final BufferedImage TILE_IMAGE;
 	private static final Icon OUTLINE_ICON;
-	private static final Icon OUTLINE_ICON_SELECTED;
 	private static final Icon SHADED_ICON;
-	private static final Icon SHADED_ICON_SELECTED;
 	private static final Icon SOLID_ICON;
-	private static final Icon SOLID_ICON_SELECTED;
 	private static final Icon TILE_ICON;
-	private static final Icon TILE_ICON_SELECTED;
 	private static final Color STYLE_ICON_COLOR = new Color(150, 150, 150);
-	private static final Color STYLE_ICON_SELECTED_COLOR = new Color(100, 180, 255);
-	private static final Color STYLE_BTN_SELECTED_BG = new Color(70, 70, 80);
 private static final Color PANEL_BG = new Color(28, 28, 28);
 private static final Color PANEL_BG_ALT = new Color(34, 34, 34);
 private static final Color HEADER_BG = new Color(40, 40, 40);
@@ -322,19 +320,15 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 		EXPORT_ICON = new ImageIcon(exportRecolored);
 
 		// Load overlay style icons
-		BufferedImage outline = ImageUtil.loadImageResource(GroupPanel.class, "outline_icon.png");
-		BufferedImage shaded = ImageUtil.loadImageResource(GroupPanel.class, "shaded_icon.png");
-		BufferedImage solid = ImageUtil.loadImageResource(GroupPanel.class, "solid_icon.png");
-		BufferedImage tile = ImageUtil.loadImageResource(GroupPanel.class, "tile_icon.png");
+		OUTLINE_IMAGE = ImageUtil.loadImageResource(GroupPanel.class, "outline_icon.png");
+		SHADED_IMAGE = ImageUtil.loadImageResource(GroupPanel.class, "shaded_icon.png");
+		SOLID_IMAGE = ImageUtil.loadImageResource(GroupPanel.class, "solid_icon.png");
+		TILE_IMAGE = ImageUtil.loadImageResource(GroupPanel.class, "tile_icon.png");
 
-		OUTLINE_ICON = new ImageIcon(recolorImage(outline, STYLE_ICON_COLOR));
-		OUTLINE_ICON_SELECTED = new ImageIcon(recolorImage(outline, STYLE_ICON_SELECTED_COLOR));
-		SHADED_ICON = new ImageIcon(recolorImage(shaded, STYLE_ICON_COLOR));
-		SHADED_ICON_SELECTED = new ImageIcon(recolorImage(shaded, STYLE_ICON_SELECTED_COLOR));
-		SOLID_ICON = new ImageIcon(recolorImage(solid, STYLE_ICON_COLOR));
-		SOLID_ICON_SELECTED = new ImageIcon(recolorImage(solid, STYLE_ICON_SELECTED_COLOR));
-		TILE_ICON = new ImageIcon(recolorImage(tile, STYLE_ICON_COLOR));
-		TILE_ICON_SELECTED = new ImageIcon(recolorImage(tile, STYLE_ICON_SELECTED_COLOR));
+		OUTLINE_ICON = new ImageIcon(tintImageWithColor(OUTLINE_IMAGE, STYLE_ICON_COLOR));
+		SHADED_ICON = new ImageIcon(tintImageWithColor(SHADED_IMAGE, STYLE_ICON_COLOR));
+		SOLID_ICON = new ImageIcon(tintImageWithColor(SOLID_IMAGE, STYLE_ICON_COLOR));
+		TILE_ICON = new ImageIcon(tintImageWithColor(TILE_IMAGE, STYLE_ICON_COLOR));
 	}
 
 	/**
@@ -360,10 +354,58 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 		return result;
 	}
 
+	private static BufferedImage tintImageWithColor(BufferedImage source, Color tintColor)
+	{
+		return tintImageWithColor(source, tintColor, 0f);
+	}
+
+	private static BufferedImage tintImageWithColor(BufferedImage source, Color tintColor, float contrastBoost)
+	{
+		BufferedImage result = new BufferedImage(source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		float baseR = tintColor.getRed();
+		float baseG = tintColor.getGreen();
+		float baseB = tintColor.getBlue();
+
+		for (int y = 0; y < source.getHeight(); y++)
+		{
+			for (int x = 0; x < source.getWidth(); x++)
+			{
+				int pixel = source.getRGB(x, y);
+				int alpha = (pixel >> 24) & 0xFF;
+				if (alpha == 0)
+				{
+					continue;
+				}
+
+				int r = (pixel >> 16) & 0xFF;
+				int g = (pixel >> 8) & 0xFF;
+				int b = pixel & 0xFF;
+				float intensity = (0.2126f * r + 0.7152f * g + 0.0722f * b) / 255f; // perceptual luminance 0..1
+
+				float factor = 1f + (intensity - 0.5f) * (0.8f + contrastBoost);
+				factor = Math.max(0.3f, Math.min(1.5f, factor));
+
+				int newR = clampColor(Math.round(baseR * factor));
+				int newG = clampColor(Math.round(baseG * factor));
+				int newB = clampColor(Math.round(baseB * factor));
+
+				result.setRGB(x, y, (alpha << 24) | (newR << 16) | (newG << 8) | newB);
+			}
+		}
+
+		return result;
+	}
+
+	private static int clampColor(int value)
+	{
+		return Math.min(255, Math.max(0, value));
+	}
+
 	private JPanel createEntryPanel(ProjectileEntry entry, int rowIndex)
 	{
 		Color rowBackground = (rowIndex % 2 == 0) ? ENTRY_BG : ENTRY_BG_ALT;
 		final boolean[] editing = {entry.getProjectileId() < 0};
+		final JButton[] styleButtons = new JButton[4];
 
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -394,7 +436,7 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 				{
 					return;
 				}
-				openColorPicker(entry, colorSwatch);
+				openColorPicker(entry, colorSwatch, styleButtons, editing);
 			}
 		});
         row1.add(colorSwatch);
@@ -478,14 +520,11 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
         styleButtonGroup.setBackground(rowBackground);
         styleButtonGroup.setOpaque(false);
 
-        final OverlayStyle currentStyle = initialStyle;
-        JButton[] styleButtons = new JButton[4];
-
-        // Order: Outline | Shaded (Hull) | Solid (Filled) | Tile
-        styleButtons[0] = createStyleButton(OverlayStyle.OUTLINE, OUTLINE_ICON, OUTLINE_ICON_SELECTED, "Outline", currentStyle, entry, editing, styleButtons);
-        styleButtons[1] = createStyleButton(OverlayStyle.HULL, SHADED_ICON, SHADED_ICON_SELECTED, "Filled Outline", currentStyle, entry, editing, styleButtons);
-        styleButtons[2] = createStyleButton(OverlayStyle.FILLED, SOLID_ICON, SOLID_ICON_SELECTED, "Filled", currentStyle, entry, editing, styleButtons);
-        styleButtons[3] = createStyleButton(OverlayStyle.TILE, TILE_ICON, TILE_ICON_SELECTED, "Tile", currentStyle, entry, editing, styleButtons);
+        // Order: Outline | Filled Outline | Filled | Tile
+        styleButtons[0] = createStyleButton(OverlayStyle.OUTLINE, OUTLINE_IMAGE, OUTLINE_ICON, "Outline", entry, editing, styleButtons);
+        styleButtons[1] = createStyleButton(OverlayStyle.HULL, SHADED_IMAGE, SHADED_ICON, "Filled Outline", entry, editing, styleButtons);
+        styleButtons[2] = createStyleButton(OverlayStyle.FILLED, SOLID_IMAGE, SOLID_ICON, "Filled", entry, editing, styleButtons);
+        styleButtons[3] = createStyleButton(OverlayStyle.TILE, TILE_IMAGE, TILE_ICON, "Tile", entry, editing, styleButtons);
 
         for (JButton btn : styleButtons)
         {
@@ -500,7 +539,7 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 			if (!editing[0])
 			{
 				editing[0] = true;
-				setInlineEditingState(true, idField, nameField, colorSwatch, editButton);
+				setInlineEditingState(true, idField, nameField, colorSwatch, editButton, styleButtons, entry);
 				idField.requestFocusInWindow();
 				idField.selectAll();
 			}
@@ -509,7 +548,7 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 				applyIdChange(entry, idField);
 				applyNameChange(entry, nameField);
 				editing[0] = false;
-				setInlineEditingState(false, idField, nameField, colorSwatch, editButton);
+				setInlineEditingState(false, idField, nameField, colorSwatch, editButton, styleButtons, entry);
 
 				if (entry.getProjectileId() < 0)
 				{
@@ -522,7 +561,7 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
         row2.add(editButton);
         row2.add(Box.createHorizontalStrut(4));
 
-		setInlineEditingState(editing[0], idField, nameField, colorSwatch, editButton);
+		setInlineEditingState(editing[0], idField, nameField, colorSwatch, editButton, styleButtons, entry);
 		if (editing[0])
 		{
 			idField.requestFocusInWindow();
@@ -542,7 +581,7 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
         return panel;
 	}
 
-	private void setInlineEditingState(boolean editing, JTextField idField, JTextField nameField, JPanel colorSwatch, JButton toggleButton)
+	private void setInlineEditingState(boolean editing, JTextField idField, JTextField nameField, JPanel colorSwatch, JButton toggleButton, JButton[] styleButtons, ProjectileEntry entry)
 	{
 		Color enabledBg = new Color(55, 55, 55);
 		Color disabledBg = new Color(25, 25, 25);
@@ -572,6 +611,8 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 			toggleButton.setIcon(editing ? SAVE_ICON : EDIT_ICON);
 			toggleButton.setToolTipText(editing ? "Save projectile changes" : "Edit projectile");
 		}
+
+		refreshStyleButtons(styleButtons, entry, editing);
 	}
 
 	private void applyIdChange(ProjectileEntry entry, JTextField field)
@@ -726,56 +767,102 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 		return button;
 	}
 
-	private JButton createStyleButton(OverlayStyle style, Icon normalIcon, Icon selectedIcon,
-									  String tooltip, OverlayStyle currentStyle,
-									  ProjectileEntry entry, boolean[] editing, JButton[] allButtons)
+	private JButton createStyleButton(OverlayStyle style, BufferedImage baseImage, Icon neutralIcon,
+									  String tooltip, ProjectileEntry entry, boolean[] editing, JButton[] allButtons)
 	{
-		boolean isSelected = (style == currentStyle);
-		JButton button = new JButton(isSelected ? selectedIcon : normalIcon);
+		JButton button = new JButton(neutralIcon);
 		button.setToolTipText(tooltip);
 		button.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 		button.setFocusPainted(false);
-		button.setOpaque(true);
-		button.setBackground(isSelected ? STYLE_BTN_SELECTED_BG : new Color(0, 0, 0, 0));
-		button.setContentAreaFilled(isSelected);
+		button.setOpaque(false);
+		button.setContentAreaFilled(false);
 		button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		button.setDisabledIcon(neutralIcon);
 
-		// Store style and icons in client properties for later updates
 		button.putClientProperty("style", style);
-		button.putClientProperty("normalIcon", normalIcon);
-		button.putClientProperty("selectedIcon", selectedIcon);
+		button.putClientProperty("tooltip", tooltip);
+		button.putClientProperty("baseImage", baseImage);
+		button.putClientProperty("neutralIcon", neutralIcon);
 
 		button.addActionListener(e -> {
 			if (!editing[0])
 			{
-				return; // Only allow changes in edit mode
+				return;
 			}
 
-			OverlayStyle btnStyle = (OverlayStyle) button.getClientProperty("style");
-			if (btnStyle != entry.getOverlayStyle())
+			if (style != entry.getOverlayStyle())
 			{
-				entry.setOverlayStyle(btnStyle);
-
-				// Update all button appearances
-				for (JButton btn : allButtons)
-				{
-					OverlayStyle s = (OverlayStyle) btn.getClientProperty("style");
-					Icon norm = (Icon) btn.getClientProperty("normalIcon");
-					Icon sel = (Icon) btn.getClientProperty("selectedIcon");
-					boolean selected = (s == btnStyle);
-					btn.setIcon(selected ? sel : norm);
-					btn.setBackground(selected ? STYLE_BTN_SELECTED_BG : new Color(0, 0, 0, 0));
-					btn.setContentAreaFilled(selected);
-				}
-
+				entry.setOverlayStyle(style);
 				if (entry.getProjectileId() >= 0)
 				{
 					onGroupChanged.run();
 				}
 			}
+
+			refreshStyleButtons(allButtons, entry, editing[0]);
 		});
 
 		return button;
+	}
+
+	private void refreshStyleButtons(JButton[] buttons, ProjectileEntry entry, boolean editing)
+	{
+		if (buttons == null)
+		{
+			return;
+		}
+
+		Color baseColor = entry.getColor() != null ? entry.getColor() : new Color(150, 150, 150);
+
+		for (JButton button : buttons)
+		{
+			if (button == null)
+			{
+				continue;
+			}
+
+			OverlayStyle btnStyle = (OverlayStyle) button.getClientProperty("style");
+			boolean selected = btnStyle == entry.getOverlayStyle();
+
+			button.setEnabled(editing);
+			button.setCursor(Cursor.getPredefinedCursor(editing ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+			String tooltip = (String) button.getClientProperty("tooltip");
+			button.setToolTipText(editing ? tooltip : "Press edit to change style");
+			button.setOpaque(false);
+			button.setContentAreaFilled(false);
+			button.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+
+			if (selected)
+			{
+				OverlayStyle style = (OverlayStyle) button.getClientProperty("style");
+				BufferedImage baseImage = (BufferedImage) button.getClientProperty("baseImage");
+				Icon coloredIcon = new ImageIcon(tintImageWithColor(baseImage, baseColor, determineContrastBoost(style)));
+				button.setIcon(coloredIcon);
+				button.setDisabledIcon(coloredIcon);
+			}
+			else
+			{
+				Icon neutralIcon = (Icon) button.getClientProperty("neutralIcon");
+				button.setIcon(neutralIcon);
+				button.setDisabledIcon(neutralIcon);
+			}
+		}
+	}
+
+	private float determineContrastBoost(OverlayStyle style)
+	{
+		switch (style)
+		{
+			case HULL:
+				return 0.9f; // strongest contrast for filled outline
+			case OUTLINE:
+				return 0.6f;
+			case FILLED:
+				return 0.4f;
+			case TILE:
+			default:
+				return 0.5f;
+		}
 	}
 
 	private String formatEntryLabel(ProjectileEntry entry)
@@ -787,7 +874,7 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
         return entry.getProjectileId() + ": " + displayName;
     }
 
-    private void openColorPicker(ProjectileEntry entry, JPanel colorSwatch)
+    private void openColorPicker(ProjectileEntry entry, JPanel colorSwatch, JButton[] styleButtons, boolean[] editing)
     {
         RuneliteColorPicker colorPicker = colorPickerManager.create(
             SwingUtilities.windowForComponent(this),
@@ -798,6 +885,7 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
         colorPicker.setOnClose(newColor -> {
             entry.setColor(newColor);
             colorSwatch.setBackground(newColor);
+			refreshStyleButtons(styleButtons, entry, editing[0]);
 			if (entry.getProjectileId() >= 0)
 			{
 				onGroupChanged.run();
