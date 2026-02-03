@@ -235,6 +235,12 @@ public class ProjectileHighlighterPlugin extends Plugin
             trackedProjectiles.clear();
             processedProjectiles.clear();
         }
+		else if (event.getKey().equals("highlightAll")
+			|| event.getKey().equals("defaultColor")
+			|| event.getKey().equals("overlayStyle"))
+		{
+			refreshTrackedProjectiles();
+		}
 
     }
 
@@ -244,12 +250,28 @@ public class ProjectileHighlighterPlugin extends Plugin
     private void onGroupsChanged(List<ProjectileGroup> groups)
     {
         log.debug("Groups changed, {} groups total", groups.size());
-        // Re-evaluate tracked projectiles - some may no longer be in enabled groups
-        trackedProjectiles.entrySet().removeIf(entry -> {
-            int projectileId = entry.getKey().getId();
-            return !config.highlightAll() && !groupStorage.isProjectileEnabled(projectileId);
-        });
+        refreshTrackedProjectiles();
     }
+
+	private void refreshTrackedProjectiles()
+	{
+		if (groupStorage == null)
+		{
+			return;
+		}
+
+		trackedProjectiles.entrySet().removeIf(entry -> {
+			int projectileId = entry.getKey().getId();
+			TrackedProjectileInfo updated = getTrackingInfo(projectileId);
+			if (updated == null)
+			{
+				return true;
+			}
+
+			entry.setValue(updated);
+			return false;
+		});
+	}
 
     /**
      * Get a display name for an actor.

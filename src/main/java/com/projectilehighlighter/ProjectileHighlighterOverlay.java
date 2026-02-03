@@ -24,7 +24,6 @@ import java.util.Map;
 
 public class ProjectileHighlighterOverlay extends Overlay
 {
-    private static final int PROJECTILE_SIZE = 20;
 
     private final Client client;
     private final ProjectileHighlighterPlugin plugin;
@@ -76,12 +75,12 @@ public class ProjectileHighlighterOverlay extends Overlay
     {
         int x = (int) projectile.getX();
         int y = (int) projectile.getY();
-        int z = (int) projectile.getZ();
+        int z = projectile.getHeight();
 
         LocalPoint projectilePoint = new LocalPoint(x, y);
 
         // Get screen point from 3D coordinates
-        Point screenPoint = Perspective.localToCanvas(client, projectilePoint, client.getPlane(), z);
+        Point screenPoint = Perspective.localToCanvas(client, projectilePoint, projectile.getFloor(), z);
 
         if (screenPoint == null)
         {
@@ -90,7 +89,7 @@ public class ProjectileHighlighterOverlay extends Overlay
 
         Color color = info.getColor();
         ProjectileHighlighterConfig.OverlayStyle style = info.getOverlayStyle();
-        int size = PROJECTILE_SIZE;
+		int size = Math.max(10, Math.min(80, config.circleDiameter()));
 
         // Set up graphics
         graphics.setStroke(new BasicStroke(config.outlineWidth()));

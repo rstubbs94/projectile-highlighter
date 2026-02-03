@@ -39,14 +39,20 @@ public class GroupPanel extends JPanel
 	private static final Icon SAVE_ICON;
 	private static final Icon PLUS_ICON = createPlusIcon();
 	private static final Icon MINUS_ICON = createMinusIcon();
+	private static final Color PANEL_BG = new Color(30, 30, 30);
+	private static final Color PANEL_BG_ALT = new Color(36, 36, 36);
 	private static final Color HEADER_BG = new Color(40, 40, 40);
+	private static final Color HEADER_BG_ALT = new Color(46, 46, 46);
 	private static final Color ENTRY_BG = new Color(50, 50, 50);
 	private static final Color ENTRY_BG_ALT = new Color(60, 60, 60);
 
     private final ProjectileGroup group;
     private final JPanel entriesPanel;
     private JLabel expandLabel;
+    private JLabel countLabel;
     private boolean expanded;
+	private final Color headerBackground;
+	private final Color panelBackground;
 	private final Consumer<Boolean> onExpansionChanged;
 
     private final Consumer<ProjectileGroup> onToggleEnabled;
@@ -63,6 +69,7 @@ public class GroupPanel extends JPanel
                       Consumer<ProjectileGroup> onAddEntry,
                       Runnable onGroupChanged,
                       ColorPickerManager colorPickerManager,
+					  boolean alternateRowColor,
 					  boolean initiallyExpanded,
 					  Consumer<Boolean> onExpansionChanged)
     {
@@ -73,11 +80,13 @@ public class GroupPanel extends JPanel
         this.onAddEntry = onAddEntry;
         this.onGroupChanged = onGroupChanged;
         this.colorPickerManager = colorPickerManager;
+		this.panelBackground = alternateRowColor ? PANEL_BG_ALT : PANEL_BG;
+		this.headerBackground = alternateRowColor ? HEADER_BG_ALT : HEADER_BG;
 		this.expanded = initiallyExpanded;
 		this.onExpansionChanged = onExpansionChanged;
 
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        setBackground(panelBackground);
         setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.DARK_GRAY_COLOR));
 
         // Header (two rows stacked vertically)
@@ -87,7 +96,8 @@ public class GroupPanel extends JPanel
         // Entries (expandable)
         entriesPanel = new JPanel();
         entriesPanel.setLayout(new BoxLayout(entriesPanel, BoxLayout.Y_AXIS));
-        entriesPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        entriesPanel.setBackground(panelBackground);
+		entriesPanel.setBorder(new EmptyBorder(0, 12, 0, 0));
         entriesPanel.setVisible(expanded);
         add(entriesPanel);
 
@@ -108,13 +118,13 @@ public class GroupPanel extends JPanel
     {
         JPanel header = new JPanel();
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
-        header.setBackground(HEADER_BG);
+        header.setBackground(headerBackground);
         header.setBorder(new EmptyBorder(4, 6, 4, 6));
 
         // Row 1: Expand arrow + status + name + count
         JPanel row1 = new JPanel();
         row1.setLayout(new BoxLayout(row1, BoxLayout.X_AXIS));
-        row1.setBackground(HEADER_BG);
+        row1.setBackground(headerBackground);
         row1.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		expandLabel = new JLabel(expanded ? "▼" : "▶");
@@ -137,7 +147,7 @@ public class GroupPanel extends JPanel
         row1.add(nameLabel);
         row1.add(Box.createHorizontalStrut(4));
 
-		JLabel countLabel = new JLabel("(" + group.getEntryCount() + ")");
+		countLabel = new JLabel("(" + group.getEntryCount() + ")");
 		countLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		countLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
         row1.add(countLabel);
@@ -154,7 +164,7 @@ public class GroupPanel extends JPanel
         // Row 2: Buttons (always visible)
         JPanel row2 = new JPanel();
         row2.setLayout(new BoxLayout(row2, BoxLayout.X_AXIS));
-        row2.setBackground(HEADER_BG);
+        row2.setBackground(headerBackground);
         row2.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		row2.add(Box.createHorizontalGlue());
@@ -230,7 +240,7 @@ public class GroupPanel extends JPanel
         {
             JLabel emptyLabel = new JLabel("No projectiles in this group");
             emptyLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-            emptyLabel.setBorder(new EmptyBorder(6, 16, 6, 6));
+            emptyLabel.setBorder(new EmptyBorder(6, 28, 6, 6));
             emptyLabel.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 13));
             emptyLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
             entriesPanel.add(emptyLabel);
@@ -247,7 +257,7 @@ public class GroupPanel extends JPanel
 
 		JPanel addButtonRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 4));
 		addButtonRow.setBackground(ENTRY_BG);
-		addButtonRow.setBorder(new EmptyBorder(4, 16, 8, 6));
+		addButtonRow.setBorder(new EmptyBorder(4, 28, 8, 6));
 		addButtonRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		JButton addEntryBtn = createIconButton(PLUS_ICON, "Add projectile to this group");
@@ -260,9 +270,18 @@ public class GroupPanel extends JPanel
 		addButtonRow.add(addLabel);
 
 		entriesPanel.add(addButtonRow);
+		updateCountLabel();
         entriesPanel.revalidate();
         entriesPanel.repaint();
     }
+
+	private void updateCountLabel()
+	{
+		if (countLabel != null)
+		{
+			countLabel.setText("(" + group.getEntryCount() + ")");
+		}
+	}
 
 	static
 	{
@@ -313,7 +332,7 @@ public class GroupPanel extends JPanel
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		panel.setBackground(rowBackground);
-		panel.setBorder(new EmptyBorder(4, 16, 4, 6));
+		panel.setBorder(new EmptyBorder(4, 28, 4, 6));
 		panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Row 1: Color swatch + editable ID/name

@@ -188,6 +188,7 @@ public class ProjectileHighlighterPanel extends PluginPanel
         }
         else
         {
+			int rowIndex = 0;
 			for (ProjectileGroup group : groups)
 			{
 				boolean expanded = groupExpansionState.getOrDefault(group.getId(), Boolean.FALSE);
@@ -199,10 +200,12 @@ public class ProjectileHighlighterPanel extends PluginPanel
 					this::addProjectileToGroup,
 					() -> groupStorage.updateGroup(group),
 					colorPickerManager,
+					rowIndex % 2 == 1,
 					expanded,
 					isExpanded -> groupExpansionState.put(group.getId(), isExpanded)
 				);
 				groupsContainer.add(groupPanel);
+				rowIndex++;
 			}
 		}
 

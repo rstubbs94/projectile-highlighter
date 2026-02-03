@@ -129,10 +129,26 @@ public interface ProjectileHighlighterConfig extends Config
 		return 12;
 	}
 
+	@Range(
+		min = 10,
+		max = 80
+	)
+	@ConfigItem(
+		keyName = "circleDiameter",
+		name = "Circle Diameter",
+		description = "Pixel diameter for outline and filled styles",
+		section = overlaySection,
+		position = 5
+	)
+	default int circleDiameter()
+	{
+		return 20;
+	}
+
     // Overlay style enum
     enum OverlayStyle
     {
-        HULL("Hull"),
+        HULL("Filled Outline"),
         OUTLINE("Outline"),
         FILLED("Filled"),
         TILE("Tile");
