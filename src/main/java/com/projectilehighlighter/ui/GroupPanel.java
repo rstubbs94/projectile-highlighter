@@ -442,9 +442,10 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
         JComboBox<OverlayStyle> styleCombo = new JComboBox<>(OverlayStyle.values());
         styleCombo.setSelectedItem(initialStyle);
 		styleCombo.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
-		Dimension comboSize = new Dimension(88, 24);
+		Dimension comboSize = new Dimension(110, 24);
         styleCombo.setPreferredSize(comboSize);
         styleCombo.setMaximumSize(comboSize);
+		styleCombo.setMinimumSize(comboSize);
         styleCombo.setToolTipText("Overlay style");
         styleCombo.addActionListener(e -> {
             OverlayStyle selected = (OverlayStyle) styleCombo.getSelectedItem();
@@ -596,7 +597,7 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 		component.addMouseListener(new MouseAdapter()
 		{
 			@Override
-			public void mouseClicked(MouseEvent e)
+			public void mousePressed(MouseEvent e)
 			{
 				toggleExpanded();
 			}
