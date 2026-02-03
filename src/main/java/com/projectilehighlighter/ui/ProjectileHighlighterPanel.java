@@ -8,10 +8,15 @@ import com.projectilehighlighter.util.GroupStorage;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.components.colorpicker.ColorPickerManager;
+import net.runelite.client.util.ImageUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
 
@@ -24,6 +29,45 @@ public class ProjectileHighlighterPanel extends PluginPanel
     private static final int MAX_RECENT_PROJECTILES = 10;
     private static final Color SECTION_HEADER_COLOR = new Color(100, 180, 255);
     private static final Color RECENT_HEADER_COLOR = new Color(255, 180, 100);
+
+    private static final Icon IMPORT_ICON;
+    private static final Icon EXPORT_ICON;
+
+    static
+    {
+        BufferedImage importImg = ImageUtil.loadImageResource(ProjectileHighlighterPanel.class, "import_icon.png");
+        BufferedImage exportImg = ImageUtil.loadImageResource(ProjectileHighlighterPanel.class, "export_icon.png");
+
+        BufferedImage importRecolored = recolorImage(importImg, new Color(150, 180, 220));
+        BufferedImage exportRecolored = recolorImage(exportImg, new Color(150, 180, 220));
+
+        IMPORT_ICON = new ImageIcon(importRecolored);
+        EXPORT_ICON = new ImageIcon(exportRecolored);
+    }
+
+    /**
+     * Recolors all non-transparent pixels in an image to the specified color,
+     * preserving the alpha channel.
+     */
+    private static BufferedImage recolorImage(BufferedImage source, Color targetColor)
+    {
+        BufferedImage result = new BufferedImage(source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        int targetRgb = targetColor.getRGB() & 0x00FFFFFF;
+
+        for (int y = 0; y < source.getHeight(); y++)
+        {
+            for (int x = 0; x < source.getWidth(); x++)
+            {
+                int pixel = source.getRGB(x, y);
+                int alpha = (pixel >> 24) & 0xFF;
+                if (alpha > 0)
+                {
+                    result.setRGB(x, y, (alpha << 24) | targetRgb);
+                }
+            }
+        }
+        return result;
+    }
 
     private final GroupStorage groupStorage;
     private final ProjectileHighlighterConfig config;
@@ -77,9 +121,25 @@ public class ProjectileHighlighterPanel extends PluginPanel
 		groupsSection.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         JPanel groupsHeader = createSectionHeader("Groups", SECTION_HEADER_COLOR);
+
+		// Header buttons panel (right side)
+		JPanel headerButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 0));
+		headerButtons.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		headerButtons.setOpaque(false);
+
+		JButton importBtn = createIconButton(IMPORT_ICON, "Import groups from clipboard");
+		importBtn.addActionListener(e -> importGroups());
+		headerButtons.add(importBtn);
+
+		JButton exportBtn = createIconButton(EXPORT_ICON, "Export all groups to clipboard");
+		exportBtn.addActionListener(e -> exportGroups());
+		headerButtons.add(exportBtn);
+
 		JButton addGroupBtn = createPlusButton("Create a new projectile group");
 		addGroupBtn.addActionListener(e -> createNewGroup());
-		groupsHeader.add(addGroupBtn, BorderLayout.EAST);
+		headerButtons.add(addGroupBtn);
+
+		groupsHeader.add(headerButtons, BorderLayout.EAST);
         groupsSection.add(groupsHeader, BorderLayout.NORTH);
 
         groupsContainer = new JPanel();
@@ -204,6 +264,7 @@ public class ProjectileHighlighterPanel extends PluginPanel
 					this::renameGroup,
 					this::deleteGroup,
 					this::addProjectileToGroup,
+					this::exportGroup,
 					() -> groupStorage.updateGroup(group),
 					colorPickerManager,
 					rowIndex % 2 == 1,
@@ -268,6 +329,21 @@ public class ProjectileHighlighterPanel extends PluginPanel
 		);
 		group.addEntry(entry);
 		refreshGroupsList();
+	}
+
+	private void exportGroup(ProjectileGroup group)
+	{
+		String json = groupStorage.exportGroupToJson(group);
+		StringSelection selection = new StringSelection(json);
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		clipboard.setContents(selection, null);
+
+		JOptionPane.showMessageDialog(
+			this,
+			"Exported group '" + group.getName() + "' to clipboard.",
+			"Export Successful",
+			JOptionPane.INFORMATION_MESSAGE
+		);
 	}
 
     /**
@@ -440,6 +516,129 @@ public class ProjectileHighlighterPanel extends PluginPanel
 		button.setOpaque(false);
 		button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		return button;
+	}
+
+	private JButton createIconButton(Icon icon, String tooltip)
+	{
+		JButton button = new JButton(icon);
+		button.setToolTipText(tooltip);
+		button.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+		button.setFocusPainted(false);
+		button.setContentAreaFilled(false);
+		button.setOpaque(false);
+		button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		return button;
+	}
+
+	private JButton createSmallTextButton(String text, String tooltip)
+	{
+		JButton button = new JButton(text);
+		button.setToolTipText(tooltip);
+		button.setMargin(new Insets(1, 4, 1, 4));
+		button.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 10));
+		button.setFocusPainted(false);
+		button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		return button;
+	}
+
+	private void exportGroups()
+	{
+		List<ProjectileGroup> groups = groupStorage.getGroups();
+		if (groups.isEmpty())
+		{
+			JOptionPane.showMessageDialog(
+				this,
+				"No groups to export.",
+				"Export",
+				JOptionPane.INFORMATION_MESSAGE
+			);
+			return;
+		}
+
+		String json = groupStorage.exportToJson();
+		StringSelection selection = new StringSelection(json);
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		clipboard.setContents(selection, null);
+
+		JOptionPane.showMessageDialog(
+			this,
+			"Exported " + groups.size() + " group(s) to clipboard.",
+			"Export Successful",
+			JOptionPane.INFORMATION_MESSAGE
+		);
+	}
+
+	private void importGroups()
+	{
+		// Read from clipboard
+		String clipboardText;
+		try
+		{
+			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+			clipboardText = (String) clipboard.getData(DataFlavor.stringFlavor);
+		}
+		catch (Exception e)
+		{
+			JOptionPane.showMessageDialog(
+				this,
+				"Could not read from clipboard.",
+				"Import Error",
+				JOptionPane.ERROR_MESSAGE
+			);
+			return;
+		}
+
+		if (clipboardText == null || clipboardText.trim().isEmpty())
+		{
+			JOptionPane.showMessageDialog(
+				this,
+				"Clipboard is empty.",
+				"Import Error",
+				JOptionPane.ERROR_MESSAGE
+			);
+			return;
+		}
+
+		// Ask user whether to merge or replace
+		Object[] options = {"Merge (keep existing)", "Replace all", "Cancel"};
+		int choice = JOptionPane.showOptionDialog(
+			this,
+			"How would you like to import the groups?",
+			"Import Groups",
+			JOptionPane.YES_NO_CANCEL_OPTION,
+			JOptionPane.QUESTION_MESSAGE,
+			null,
+			options,
+			options[0]
+		);
+
+		if (choice == 2 || choice == JOptionPane.CLOSED_OPTION)
+		{
+			return; // Cancelled
+		}
+
+		boolean replaceExisting = (choice == 1);
+
+		try
+		{
+			String result = groupStorage.importFromJson(clipboardText, replaceExisting);
+			refreshGroupsList();
+			JOptionPane.showMessageDialog(
+				this,
+				result,
+				"Import Successful",
+				JOptionPane.INFORMATION_MESSAGE
+			);
+		}
+		catch (IllegalArgumentException e)
+		{
+			JOptionPane.showMessageDialog(
+				this,
+				e.getMessage(),
+				"Import Error",
+				JOptionPane.ERROR_MESSAGE
+			);
+		}
 	}
 
 	private ProjectileEntry createEntryFromRecent(RecentProjectile projectile)

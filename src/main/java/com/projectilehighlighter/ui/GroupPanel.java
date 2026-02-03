@@ -39,6 +39,19 @@ public class GroupPanel extends JPanel
 	private static final Icon SAVE_ICON;
 	private static final Icon PLUS_ICON = createPlusIcon();
 	private static final Icon MINUS_ICON = createMinusIcon();
+	private static final Icon EXPORT_ICON;
+	// Overlay style icons
+	private static final Icon OUTLINE_ICON;
+	private static final Icon OUTLINE_ICON_SELECTED;
+	private static final Icon SHADED_ICON;
+	private static final Icon SHADED_ICON_SELECTED;
+	private static final Icon SOLID_ICON;
+	private static final Icon SOLID_ICON_SELECTED;
+	private static final Icon TILE_ICON;
+	private static final Icon TILE_ICON_SELECTED;
+	private static final Color STYLE_ICON_COLOR = new Color(150, 150, 150);
+	private static final Color STYLE_ICON_SELECTED_COLOR = new Color(100, 180, 255);
+	private static final Color STYLE_BTN_SELECTED_BG = new Color(70, 70, 80);
 private static final Color PANEL_BG = new Color(28, 28, 28);
 private static final Color PANEL_BG_ALT = new Color(34, 34, 34);
 private static final Color HEADER_BG = new Color(40, 40, 40);
@@ -59,6 +72,7 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
     private final Consumer<ProjectileGroup> onRename;
     private final Consumer<ProjectileGroup> onDelete;
     private final Consumer<ProjectileGroup> onAddEntry;
+    private final Consumer<ProjectileGroup> onExport;
     private final Runnable onGroupChanged;
     private final ColorPickerManager colorPickerManager;
 
@@ -67,6 +81,7 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
                       Consumer<ProjectileGroup> onRename,
                       Consumer<ProjectileGroup> onDelete,
                       Consumer<ProjectileGroup> onAddEntry,
+                      Consumer<ProjectileGroup> onExport,
                       Runnable onGroupChanged,
                       ColorPickerManager colorPickerManager,
 					  boolean alternateRowColor,
@@ -78,6 +93,7 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
         this.onRename = onRename;
         this.onDelete = onDelete;
         this.onAddEntry = onAddEntry;
+        this.onExport = onExport;
         this.onGroupChanged = onGroupChanged;
         this.colorPickerManager = colorPickerManager;
 		this.panelBackground = alternateRowColor ? PANEL_BG_ALT : PANEL_BG;
@@ -124,32 +140,49 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
         header.setBorder(new EmptyBorder(4, 6, 4, 6));
 		header.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+		// Clickable left side panel (for expand/collapse)
+		JPanel leftSide = new JPanel();
+		leftSide.setLayout(new BoxLayout(leftSide, BoxLayout.X_AXIS));
+		leftSide.setBackground(headerBackground);
+		leftSide.setOpaque(false);
+		leftSide.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
         // Single row: Expand arrow + status + name + count + buttons
 		expandLabel = new JLabel(expanded ? "▼" : "▶");
 		expandLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		expandLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
-        expandLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		header.add(expandLabel);
-		header.add(Box.createHorizontalStrut(3));
+		leftSide.add(expandLabel);
+		leftSide.add(Box.createHorizontalStrut(3));
 
 		JLabel statusDot = new JLabel("●");
 		statusDot.setForeground(group.isEnabled() ? ENABLED_COLOR : DISABLED_COLOR);
 		statusDot.setToolTipText(group.isEnabled() ? "Enabled" : "Disabled");
 		statusDot.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 10));
-        header.add(statusDot);
-        header.add(Box.createHorizontalStrut(3));
+        leftSide.add(statusDot);
+        leftSide.add(Box.createHorizontalStrut(3));
 
 		JLabel nameLabel = new JLabel(group.getName());
 		nameLabel.setForeground(Color.WHITE);
 		nameLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
-        header.add(nameLabel);
-        header.add(Box.createHorizontalStrut(3));
+        leftSide.add(nameLabel);
+        leftSide.add(Box.createHorizontalStrut(3));
 
 		countLabel = new JLabel("(" + group.getEntryCount() + ")");
 		countLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		countLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 11));
-        header.add(countLabel);
+        leftSide.add(countLabel);
 
+		// Add click listener to the entire left side panel
+		leftSide.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mousePressed(MouseEvent e)
+			{
+				toggleExpanded();
+			}
+		});
+
+		header.add(leftSide);
 		header.add(Box.createHorizontalGlue());
 
 		// Buttons on the right
@@ -186,15 +219,14 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 		header.add(renameBtn);
 		header.add(Box.createHorizontalStrut(2));
 
+		JButton exportBtn = createIconButton(EXPORT_ICON, "Export group to clipboard");
+		exportBtn.addActionListener(e -> onExport.accept(group));
+		header.add(exportBtn);
+		header.add(Box.createHorizontalStrut(2));
+
 		JButton deleteBtn = createIconButton(MINUS_ICON, "Delete group");
 		deleteBtn.addActionListener(e -> onDelete.accept(group));
 		header.add(deleteBtn);
-
-		// Add click listeners for expansion to the left side elements
-		addHeaderToggleListener(expandLabel);
-		addHeaderToggleListener(statusDot);
-		addHeaderToggleListener(nameLabel);
-		addHeaderToggleListener(countLabel);
 
         return header;
     }
@@ -270,9 +302,11 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 		BufferedImage invisible = ImageUtil.loadImageResource(GroupPanel.class, "invisible_icon.png");
 		BufferedImage edit = ImageUtil.loadImageResource(GroupPanel.class, "edit_icon.png");
 		BufferedImage save = ImageUtil.loadImageResource(GroupPanel.class, "save_icon.png");
+		BufferedImage export = ImageUtil.loadImageResource(GroupPanel.class, "export_icon.png");
 
 		BufferedImage editRecolored = recolorImage(edit, new Color(200, 200, 200));
 		BufferedImage saveRecolored = recolorImage(save, new Color(140, 210, 160));
+		BufferedImage exportRecolored = recolorImage(export, new Color(150, 180, 220));
 
 		EYE_OPEN_ICON = new ImageIcon(visible);
 		EYE_OPEN_ICON_HOVER = new ImageIcon(ImageUtil.alphaOffset(visible, 0.5f));
@@ -280,6 +314,22 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 		EYE_CLOSED_ICON_HOVER = new ImageIcon(ImageUtil.alphaOffset(invisible, 0.5f));
 		EDIT_ICON = new ImageIcon(editRecolored);
 		SAVE_ICON = new ImageIcon(saveRecolored);
+		EXPORT_ICON = new ImageIcon(exportRecolored);
+
+		// Load overlay style icons
+		BufferedImage outline = ImageUtil.loadImageResource(GroupPanel.class, "outline_icon.png");
+		BufferedImage shaded = ImageUtil.loadImageResource(GroupPanel.class, "shaded_icon.png");
+		BufferedImage solid = ImageUtil.loadImageResource(GroupPanel.class, "solid_icon.png");
+		BufferedImage tile = ImageUtil.loadImageResource(GroupPanel.class, "tile_icon.png");
+
+		OUTLINE_ICON = new ImageIcon(recolorImage(outline, STYLE_ICON_COLOR));
+		OUTLINE_ICON_SELECTED = new ImageIcon(recolorImage(outline, STYLE_ICON_SELECTED_COLOR));
+		SHADED_ICON = new ImageIcon(recolorImage(shaded, STYLE_ICON_COLOR));
+		SHADED_ICON_SELECTED = new ImageIcon(recolorImage(shaded, STYLE_ICON_SELECTED_COLOR));
+		SOLID_ICON = new ImageIcon(recolorImage(solid, STYLE_ICON_COLOR));
+		SOLID_ICON_SELECTED = new ImageIcon(recolorImage(solid, STYLE_ICON_SELECTED_COLOR));
+		TILE_ICON = new ImageIcon(recolorImage(tile, STYLE_ICON_COLOR));
+		TILE_ICON_SELECTED = new ImageIcon(recolorImage(tile, STYLE_ICON_SELECTED_COLOR));
 	}
 
 	/**
@@ -405,7 +455,7 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
         panel.add(row1);
         panel.add(Box.createVerticalStrut(4));
 
-        // Row 2: Style dropdown + buttons (right-aligned)
+        // Row 2: Style icon buttons + action buttons (right-aligned)
         JPanel row2 = new JPanel();
         row2.setLayout(new BoxLayout(row2, BoxLayout.X_AXIS));
         row2.setBackground(rowBackground);
@@ -418,23 +468,26 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
             entry.setOverlayStyle(initialStyle);
         }
 
-        JComboBox<OverlayStyle> styleCombo = new JComboBox<>(OverlayStyle.values());
-        styleCombo.setSelectedItem(initialStyle);
-		styleCombo.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 11));
-		Dimension comboSize = new Dimension(80, 20);
-        styleCombo.setPreferredSize(comboSize);
-        styleCombo.setMaximumSize(comboSize);
-		styleCombo.setMinimumSize(comboSize);
-        styleCombo.setToolTipText("Overlay style");
-        styleCombo.addActionListener(e -> {
-            OverlayStyle selected = (OverlayStyle) styleCombo.getSelectedItem();
-            if (selected != null && selected != entry.getOverlayStyle())
-            {
-                entry.setOverlayStyle(selected);
-                onGroupChanged.run();
-            }
-        });
-        row2.add(styleCombo);
+        // Style icon button group
+        JPanel styleButtonGroup = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 0));
+        styleButtonGroup.setBackground(rowBackground);
+        styleButtonGroup.setOpaque(false);
+
+        final OverlayStyle currentStyle = initialStyle;
+        JButton[] styleButtons = new JButton[4];
+
+        // Order: Outline | Shaded (Hull) | Solid (Filled) | Tile
+        styleButtons[0] = createStyleButton(OverlayStyle.OUTLINE, OUTLINE_ICON, OUTLINE_ICON_SELECTED, "Outline", currentStyle, entry, editing, styleButtons);
+        styleButtons[1] = createStyleButton(OverlayStyle.HULL, SHADED_ICON, SHADED_ICON_SELECTED, "Filled Outline", currentStyle, entry, editing, styleButtons);
+        styleButtons[2] = createStyleButton(OverlayStyle.FILLED, SOLID_ICON, SOLID_ICON_SELECTED, "Filled", currentStyle, entry, editing, styleButtons);
+        styleButtons[3] = createStyleButton(OverlayStyle.TILE, TILE_ICON, TILE_ICON_SELECTED, "Tile", currentStyle, entry, editing, styleButtons);
+
+        for (JButton btn : styleButtons)
+        {
+            styleButtonGroup.add(btn);
+        }
+
+        row2.add(styleButtonGroup);
         row2.add(Box.createHorizontalGlue());
 
 		JButton editButton = createIconButton(EDIT_ICON, "Edit projectile");
@@ -571,18 +624,6 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 		}
 	}
 
-	private void addHeaderToggleListener(Component component)
-	{
-		component.addMouseListener(new MouseAdapter()
-		{
-			@Override
-			public void mousePressed(MouseEvent e)
-			{
-				toggleExpanded();
-			}
-		});
-	}
-
 	private void updateToggleButtonIcon(JButton toggleBtn, boolean hover)
 	{
 		if (group.isEnabled())
@@ -677,6 +718,58 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 		button.setContentAreaFilled(false);
 		button.setOpaque(false);
 		button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		return button;
+	}
+
+	private JButton createStyleButton(OverlayStyle style, Icon normalIcon, Icon selectedIcon,
+									  String tooltip, OverlayStyle currentStyle,
+									  ProjectileEntry entry, boolean[] editing, JButton[] allButtons)
+	{
+		boolean isSelected = (style == currentStyle);
+		JButton button = new JButton(isSelected ? selectedIcon : normalIcon);
+		button.setToolTipText(tooltip);
+		button.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+		button.setFocusPainted(false);
+		button.setOpaque(true);
+		button.setBackground(isSelected ? STYLE_BTN_SELECTED_BG : new Color(0, 0, 0, 0));
+		button.setContentAreaFilled(isSelected);
+		button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+		// Store style and icons in client properties for later updates
+		button.putClientProperty("style", style);
+		button.putClientProperty("normalIcon", normalIcon);
+		button.putClientProperty("selectedIcon", selectedIcon);
+
+		button.addActionListener(e -> {
+			if (!editing[0])
+			{
+				return; // Only allow changes in edit mode
+			}
+
+			OverlayStyle btnStyle = (OverlayStyle) button.getClientProperty("style");
+			if (btnStyle != entry.getOverlayStyle())
+			{
+				entry.setOverlayStyle(btnStyle);
+
+				// Update all button appearances
+				for (JButton btn : allButtons)
+				{
+					OverlayStyle s = (OverlayStyle) btn.getClientProperty("style");
+					Icon norm = (Icon) btn.getClientProperty("normalIcon");
+					Icon sel = (Icon) btn.getClientProperty("selectedIcon");
+					boolean selected = (s == btnStyle);
+					btn.setIcon(selected ? sel : norm);
+					btn.setBackground(selected ? STYLE_BTN_SELECTED_BG : new Color(0, 0, 0, 0));
+					btn.setContentAreaFilled(selected);
+				}
+
+				if (entry.getProjectileId() >= 0)
+				{
+					onGroupChanged.run();
+				}
+			}
+		});
+
 		return button;
 	}
 

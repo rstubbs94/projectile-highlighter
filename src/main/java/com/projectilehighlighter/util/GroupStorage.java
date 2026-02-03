@@ -1,6 +1,8 @@
 package com.projectilehighlighter.util;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import com.projectilehighlighter.model.ProjectileEntry;
 import com.projectilehighlighter.model.ProjectileGroup;
@@ -25,6 +27,8 @@ public class GroupStorage
 {
     private static final String FOLDER_NAME = "projectile-highlighter";
     private static final String GROUPS_FILE_NAME = "groups.json";
+    private static final String EXPORT_FORMAT_ID = "projectile-highlighter-groups";
+    private static final int EXPORT_FORMAT_VERSION = 1;
 
     private final Gson gson;
     private final File groupsFile;
@@ -222,5 +226,125 @@ public class GroupStorage
     public boolean isProjectileEnabled(int projectileId)
     {
         return getEnabledEntry(projectileId) != null;
+    }
+
+    /**
+     * Export all groups to a JSON string with format identifier for clipboard.
+     */
+    public String exportToJson()
+    {
+        JsonObject wrapper = new JsonObject();
+        wrapper.addProperty("format", EXPORT_FORMAT_ID);
+        wrapper.addProperty("version", EXPORT_FORMAT_VERSION);
+        wrapper.add("groups", gson.toJsonTree(groups));
+        return gson.toJson(wrapper);
+    }
+
+    /**
+     * Export a single group to a JSON string with format identifier for clipboard.
+     */
+    public String exportGroupToJson(ProjectileGroup group)
+    {
+        JsonObject wrapper = new JsonObject();
+        wrapper.addProperty("format", EXPORT_FORMAT_ID);
+        wrapper.addProperty("version", EXPORT_FORMAT_VERSION);
+        wrapper.add("groups", gson.toJsonTree(java.util.Collections.singletonList(group)));
+        return gson.toJson(wrapper);
+    }
+
+    /**
+     * Import groups from a JSON string. Validates the format identifier.
+     * @param json The JSON string to import
+     * @param replaceExisting If true, replaces all existing groups. If false, merges with existing.
+     * @return Result message describing what happened
+     * @throws IllegalArgumentException if the JSON format is invalid
+     */
+    public String importFromJson(String json, boolean replaceExisting) throws IllegalArgumentException
+    {
+        if (json == null || json.trim().isEmpty())
+        {
+            throw new IllegalArgumentException("Import data is empty");
+        }
+
+        try
+        {
+            JsonObject wrapper = new JsonParser().parse(json).getAsJsonObject();
+
+            // Validate format identifier
+            if (!wrapper.has("format") || !EXPORT_FORMAT_ID.equals(wrapper.get("format").getAsString()))
+            {
+                throw new IllegalArgumentException("Invalid format: not a Projectile Highlighter export");
+            }
+
+            // Check version (for future compatibility)
+            int version = wrapper.has("version") ? wrapper.get("version").getAsInt() : 0;
+            if (version > EXPORT_FORMAT_VERSION)
+            {
+                throw new IllegalArgumentException("Export version " + version + " is newer than supported version " + EXPORT_FORMAT_VERSION);
+            }
+
+            // Parse groups
+            Type listType = new TypeToken<ArrayList<ProjectileGroup>>(){}.getType();
+            List<ProjectileGroup> importedGroups = gson.fromJson(wrapper.get("groups"), listType);
+
+            if (importedGroups == null || importedGroups.isEmpty())
+            {
+                throw new IllegalArgumentException("No groups found in import data");
+            }
+
+            int importedCount = importedGroups.size();
+            int addedCount = 0;
+            int skippedCount = 0;
+
+            if (replaceExisting)
+            {
+                groups.clear();
+                groups.addAll(importedGroups);
+                addedCount = importedCount;
+            }
+            else
+            {
+                // Merge: add groups that don't already exist (by ID)
+                for (ProjectileGroup importedGroup : importedGroups)
+                {
+                    boolean exists = groups.stream()
+                        .anyMatch(g -> g.getId().equals(importedGroup.getId()));
+                    if (!exists)
+                    {
+                        groups.add(importedGroup);
+                        addedCount++;
+                    }
+                    else
+                    {
+                        skippedCount++;
+                    }
+                }
+            }
+
+            saveGroups();
+            notifyGroupsChanged();
+
+            if (replaceExisting)
+            {
+                return "Imported " + addedCount + " group(s)";
+            }
+            else if (skippedCount > 0)
+            {
+                return "Added " + addedCount + " group(s), skipped " + skippedCount + " duplicate(s)";
+            }
+            else
+            {
+                return "Added " + addedCount + " group(s)";
+            }
+        }
+        catch (IllegalArgumentException e)
+        {
+            throw e;
+        }
+        catch (Exception e)
+        {
+            log.error("Failed to parse import JSON", e);
+            throw new IllegalArgumentException("Failed to parse import data: " + e.getMessage());
+        }
     }
 }

@@ -117,6 +117,41 @@ The sidebar panel has limited horizontal space (~225px). All UI components must 
 - [x] Change green "+" buttons to simple icon style (matching other icons)
 - [x] Widen overlay style dropdown for better readability (72px -> 88px)
 
+### Bug Fixes
+- [x] Fix clicking on group header to expand/collapse entries (wrap left side in clickable panel)
+- [x] Fix projectile entry dropdown selector width to fit contents (80px -> 90px)
+
+### Import/Export Feature
+- [x] Add import/export functionality for groups
+  - Export all: Copy all groups JSON to clipboard (button in Groups header)
+  - Export single: Export individual group via button on each group row
+  - Import: Read groups JSON from clipboard with merge/replace options
+  - Include format identifier/version to validate imported data is for this plugin
+  - Add Export and Import buttons to the Groups section header
+
+### Overlay Style Icon Buttons
+- [x] Replace dropdown selector with icon button group for overlay style selection
+  - Icons to load (from resources): outline_icon.png, shaded_icon.png, solid_icon.png, tile_icon.png
+  - Layout: Horizontal row of 4 icon buttons, left-aligned under the ID field
+  - Order: Outline | Shaded | Solid | Tile
+  - Icon mapping to OverlayStyle enum:
+    - outline_icon.png => OUTLINE
+    - shaded_icon.png => FILLED_OUTLINE (filled outline)
+    - solid_icon.png => FILLED
+    - tile_icon.png => TILE
+  - Visual states:
+    - Selected: Highlighted/indented appearance (brighter background or border)
+    - Unselected: Normal icon appearance (dimmed/grayed)
+    - Only changeable in edit mode (when entry is being edited)
+  - Implementation in GroupPanel.java:
+    1. Add static icon fields: OUTLINE_ICON, SHADED_ICON, SOLID_ICON, TILE_ICON
+    2. Load and recolor icons in static initializer (light gray like other icons)
+    3. Create `createStyleButtonGroup()` method that returns a JPanel with 4 toggle buttons
+    4. Track selected style with button group or manual selection state
+    5. Apply visual feedback (background color change or border) for selected button
+    6. Wire button clicks to update entry.setOverlayStyle() and call onGroupChanged
+    7. Remove the JComboBox<OverlayStyle> dropdown from createEntryRow()
+
 ### Functionality
 - [ ] Verify overlay rendering works correctly for all styles
 - [ ] Test group enable/disable affects overlay correctly
@@ -137,7 +172,7 @@ The sidebar panel has limited horizontal space (~225px). All UI components must 
 - [ ] Test persistence across client restarts
 
 ### Future Enhancements (Nice to Have)
-- [ ] Import/export groups as JSON
+- [x] Import/export groups as JSON (moved to active work)
 - [ ] Preset groups for common bosses (Zulrah, CoX, ToB, etc.)
 - [ ] Sound alerts for specific projectiles
 - [ ] Projectile trajectory prediction lines
@@ -156,6 +191,21 @@ Icons used in this plugin:
   - Location: `src/main/resources/com/projectilehighlighter/ui/save_icon.png`
   - Recolored to soft green at runtime for the inline save button state
 
+- **Export Icon**: [Export by Dewi Sari](https://www.flaticon.com/free-icon/export_8828334) from Flaticon
+  - Location: `src/main/resources/com/projectilehighlighter/ui/export_icon.png`
+  - Recolored to light blue (150, 180, 220) at runtime to match theme
+
+- **Import Icon**: [Import by Dewi Sari](https://www.flaticon.com/free-icon/import_8765164) from Flaticon
+  - Location: `src/main/resources/com/projectilehighlighter/ui/import_icon.png`
+  - Recolored to light blue (150, 180, 220) at runtime to match theme
+
 - **Visible/Invisible Icons**: Custom icons for group visibility toggle
   - Location: `src/main/resources/com/projectilehighlighter/ui/visible_icon.png`
   - Location: `src/main/resources/com/projectilehighlighter/ui/invisible_icon.png`
+
+- **Overlay Style Icons**: Icons for overlay style selection buttons
+  - Location: `src/main/resources/com/projectilehighlighter/ui/outline_icon.png` (OUTLINE style)
+  - Location: `src/main/resources/com/projectilehighlighter/ui/shaded_icon.png` (FILLED_OUTLINE style)
+  - Location: `src/main/resources/com/projectilehighlighter/ui/solid_icon.png` (FILLED style)
+  - Location: `src/main/resources/com/projectilehighlighter/ui/tile_icon.png` (TILE style)
+  - Recolored to light gray at runtime; selected state shows brighter/highlighted
