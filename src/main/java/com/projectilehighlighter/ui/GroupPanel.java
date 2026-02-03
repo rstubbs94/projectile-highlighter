@@ -88,6 +88,7 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBackground(panelBackground);
         setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.DARK_GRAY_COLOR));
+		setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Header (two rows stacked vertically)
         JPanel headerPanel = createHeaderPanel();
@@ -97,7 +98,8 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
         entriesPanel = new JPanel();
         entriesPanel.setLayout(new BoxLayout(entriesPanel, BoxLayout.Y_AXIS));
         entriesPanel.setBackground(panelBackground);
-		entriesPanel.setBorder(new EmptyBorder(0, 12, 0, 0));
+		entriesPanel.setBorder(new EmptyBorder(0, 8, 0, 0));
+		entriesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         entriesPanel.setVisible(expanded);
         add(entriesPanel);
 
@@ -117,66 +119,43 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
     private JPanel createHeaderPanel()
     {
         JPanel header = new JPanel();
-        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+        header.setLayout(new BoxLayout(header, BoxLayout.X_AXIS));
         header.setBackground(headerBackground);
-        header.setBorder(new EmptyBorder(6, 8, 4, 8));
+        header.setBorder(new EmptyBorder(4, 6, 4, 6));
+		header.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Row 1: Expand arrow + status + name + count
-        JPanel row1 = new JPanel();
-        row1.setLayout(new BoxLayout(row1, BoxLayout.X_AXIS));
-        row1.setBackground(headerBackground);
-        row1.setAlignmentX(Component.LEFT_ALIGNMENT);
-
+        // Single row: Expand arrow + status + name + count + buttons
 		expandLabel = new JLabel(expanded ? "▼" : "▶");
 		expandLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-		expandLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 14));
+		expandLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
         expandLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		row1.add(expandLabel);
-		row1.add(Box.createHorizontalStrut(4));
+		header.add(expandLabel);
+		header.add(Box.createHorizontalStrut(3));
 
 		JLabel statusDot = new JLabel("●");
 		statusDot.setForeground(group.isEnabled() ? ENABLED_COLOR : DISABLED_COLOR);
 		statusDot.setToolTipText(group.isEnabled() ? "Enabled" : "Disabled");
-		statusDot.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
-        row1.add(statusDot);
-        row1.add(Box.createHorizontalStrut(4));
+		statusDot.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 10));
+        header.add(statusDot);
+        header.add(Box.createHorizontalStrut(3));
 
 		JLabel nameLabel = new JLabel(group.getName());
 		nameLabel.setForeground(Color.WHITE);
-		nameLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 16));
-        row1.add(nameLabel);
-        row1.add(Box.createHorizontalStrut(4));
+		nameLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
+        header.add(nameLabel);
+        header.add(Box.createHorizontalStrut(3));
 
 		countLabel = new JLabel("(" + group.getEntryCount() + ")");
 		countLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-		countLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
-        row1.add(countLabel);
+		countLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 11));
+        header.add(countLabel);
 
-		row1.add(Box.createHorizontalGlue());
-		addHeaderToggleListener(row1);
-		addHeaderToggleListener(expandLabel);
-		addHeaderToggleListener(statusDot);
-		addHeaderToggleListener(nameLabel);
-		addHeaderToggleListener(countLabel);
-        header.add(row1);
-        header.add(Box.createVerticalStrut(4));
+		header.add(Box.createHorizontalGlue());
 
-        // Row 2: Buttons (always visible)
-        JPanel row2 = new JPanel();
-        row2.setLayout(new BoxLayout(row2, BoxLayout.X_AXIS));
-        row2.setBackground(headerBackground);
-        row2.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-		int spacing = 6;
-		row2.add(Box.createHorizontalGlue());
-
-		Dimension btnSize = new Dimension(40, 28);
-
+		// Buttons on the right
 		JButton toggleBtn = new JButton();
 		updateToggleButtonIcon(toggleBtn, false);
-		toggleBtn.setMargin(new Insets(2, 2, 2, 2));
-		toggleBtn.setPreferredSize(btnSize);
-		toggleBtn.setMaximumSize(btnSize);
+		toggleBtn.setMargin(new Insets(1, 1, 1, 1));
 		toggleBtn.setFocusPainted(false);
 		toggleBtn.setContentAreaFilled(false);
 		toggleBtn.setOpaque(false);
@@ -199,19 +178,23 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 				updateToggleButtonIcon(toggleBtn, false);
 			}
 		});
-		row2.add(toggleBtn);
-		row2.add(Box.createHorizontalStrut(spacing));
+		header.add(toggleBtn);
+		header.add(Box.createHorizontalStrut(2));
 
 		JButton renameBtn = createIconButton(EDIT_ICON, "Rename group");
 		renameBtn.addActionListener(e -> onRename.accept(group));
-		row2.add(renameBtn);
-		row2.add(Box.createHorizontalStrut(spacing));
+		header.add(renameBtn);
+		header.add(Box.createHorizontalStrut(2));
 
 		JButton deleteBtn = createIconButton(MINUS_ICON, "Delete group");
 		deleteBtn.addActionListener(e -> onDelete.accept(group));
-		row2.add(deleteBtn);
+		header.add(deleteBtn);
 
-		header.add(row2);
+		// Add click listeners for expansion to the left side elements
+		addHeaderToggleListener(expandLabel);
+		addHeaderToggleListener(statusDot);
+		addHeaderToggleListener(nameLabel);
+		addHeaderToggleListener(countLabel);
 
         return header;
     }
@@ -241,8 +224,8 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
         {
             JLabel emptyLabel = new JLabel("No projectiles in this group");
             emptyLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-            emptyLabel.setBorder(new EmptyBorder(6, 28, 6, 6));
-            emptyLabel.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 13));
+            emptyLabel.setBorder(new EmptyBorder(6, 10, 6, 6));
+            emptyLabel.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 12));
             emptyLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
             entriesPanel.add(emptyLabel);
         }
@@ -256,19 +239,16 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
             }
         }
 
-		JPanel addButtonRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 4));
+		JPanel addButtonRow = new JPanel();
+		addButtonRow.setLayout(new BoxLayout(addButtonRow, BoxLayout.X_AXIS));
 		addButtonRow.setBackground(ENTRY_BG);
-		addButtonRow.setBorder(new EmptyBorder(4, 28, 8, 6));
+		addButtonRow.setBorder(new EmptyBorder(4, 10, 6, 6));
 		addButtonRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		JButton addEntryBtn = createIconButton(PLUS_ICON, "Add projectile to this group");
 		addEntryBtn.addActionListener(e -> onAddEntry.accept(group));
 		addButtonRow.add(addEntryBtn);
-
-		JLabel addLabel = new JLabel("Add Projectile");
-		addLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-		addLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
-		addButtonRow.add(addLabel);
+		addButtonRow.add(Box.createHorizontalGlue());
 
 		entriesPanel.add(addButtonRow);
 		updateCountLabel();
@@ -333,21 +313,21 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		panel.setBackground(rowBackground);
-		panel.setBorder(new EmptyBorder(6, 32, 6, 8));
+		panel.setBorder(new EmptyBorder(4, 8, 4, 6));
 		panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Row 1: Color swatch + editable ID/name
+        // Row 1: Color swatch + ID + Name
         JPanel row1 = new JPanel();
         row1.setLayout(new BoxLayout(row1, BoxLayout.X_AXIS));
         row1.setBackground(rowBackground);
         row1.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		JPanel colorSwatch = new JPanel();
-		colorSwatch.setPreferredSize(new Dimension(16, 16));
-        colorSwatch.setMaximumSize(new Dimension(16, 16));
-        colorSwatch.setMinimumSize(new Dimension(16, 16));
+		colorSwatch.setPreferredSize(new Dimension(14, 14));
+        colorSwatch.setMaximumSize(new Dimension(14, 14));
+        colorSwatch.setMinimumSize(new Dimension(14, 14));
         colorSwatch.setBackground(entry.getColor());
-        colorSwatch.setBorder(BorderFactory.createLineBorder(Color.WHITE, 1));
+        colorSwatch.setBorder(BorderFactory.createLineBorder(new Color(90, 90, 90), 1));
         colorSwatch.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         colorSwatch.setToolTipText("Click to change color");
 		colorSwatch.addMouseListener(new MouseAdapter()
@@ -367,10 +347,12 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 
 		String initialIdText = entry.getProjectileId() < 0 ? "" : String.valueOf(entry.getProjectileId());
 		JTextField idField = new JTextField(initialIdText, 5);
-		idField.setMaximumSize(new Dimension(64, 20));
+		idField.setPreferredSize(new Dimension(50, 20));
+		idField.setMaximumSize(new Dimension(50, 20));
+		idField.setMinimumSize(new Dimension(50, 20));
 		idField.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 		idField.setForeground(Color.WHITE);
-		idField.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
+		idField.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
 		idField.setEditable(false);
 		idField.setFocusable(false);
 		idField.addActionListener(e -> {
@@ -394,13 +376,11 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 		row1.add(Box.createHorizontalStrut(6));
 
 		JTextField nameField = new JTextField(entry.getCustomName() != null ? entry.getCustomName() : "");
-		nameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
-		nameField.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+		nameField.setPreferredSize(new Dimension(80, 20));
+		nameField.setMaximumSize(new Dimension(Short.MAX_VALUE, 20));
+		nameField.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
 		nameField.setForeground(Color.WHITE);
-		nameField.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createLineBorder(new Color(70, 70, 70)),
-			BorderFactory.createEmptyBorder(2, 6, 2, 6)
-		));
+		nameField.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
 		nameField.setEditable(false);
 		nameField.setFocusable(false);
 		nameField.addActionListener(e -> {
@@ -421,12 +401,11 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 			}
 		});
 		row1.add(nameField);
-        row1.add(Box.createHorizontalGlue());
 
         panel.add(row1);
-        panel.add(Box.createVerticalStrut(5));
+        panel.add(Box.createVerticalStrut(4));
 
-        // Row 2: Style dropdown + Name button + Remove button
+        // Row 2: Style dropdown + buttons (right-aligned)
         JPanel row2 = new JPanel();
         row2.setLayout(new BoxLayout(row2, BoxLayout.X_AXIS));
         row2.setBackground(rowBackground);
@@ -441,8 +420,8 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 
         JComboBox<OverlayStyle> styleCombo = new JComboBox<>(OverlayStyle.values());
         styleCombo.setSelectedItem(initialStyle);
-		styleCombo.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
-		Dimension comboSize = new Dimension(110, 24);
+		styleCombo.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 11));
+		Dimension comboSize = new Dimension(80, 20);
         styleCombo.setPreferredSize(comboSize);
         styleCombo.setMaximumSize(comboSize);
 		styleCombo.setMinimumSize(comboSize);
@@ -660,14 +639,14 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 
 	private static Icon createPlusIcon()
 	{
-		int size = 22;
+		int size = 18;
 		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = image.createGraphics();
 		g.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
-		g.setStroke(new BasicStroke(3.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		g.setStroke(new BasicStroke(2.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		g.setColor(new Color(90, 200, 90));
 		int mid = size / 2;
-		int inset = 5;
+		int inset = 4;
 		g.drawLine(mid, inset, mid, size - inset);
 		g.drawLine(inset, mid, size - inset, mid);
 		g.dispose();
@@ -676,14 +655,14 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 
 	private static Icon createMinusIcon()
 	{
-		int size = 22;
+		int size = 18;
 		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = image.createGraphics();
 		g.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
-		g.setStroke(new BasicStroke(3.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		g.setStroke(new BasicStroke(2.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		g.setColor(new Color(220, 80, 80));
 		int mid = size / 2;
-		int inset = 5;
+		int inset = 4;
 		g.drawLine(inset, mid, size - inset, mid);
 		g.dispose();
 		return new ImageIcon(image);
@@ -693,7 +672,7 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 	{
 		JButton button = new JButton(icon);
 		button.setToolTipText(tooltip);
-		button.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+		button.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
 		button.setFocusPainted(false);
 		button.setContentAreaFilled(false);
 		button.setOpaque(false);

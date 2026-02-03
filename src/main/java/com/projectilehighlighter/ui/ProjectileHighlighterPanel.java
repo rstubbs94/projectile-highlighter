@@ -56,11 +56,11 @@ public class ProjectileHighlighterPanel extends PluginPanel
         // ===== HEADER =====
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        headerPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        headerPanel.setBorder(new EmptyBorder(6, 8, 6, 8));
 
         JLabel titleLabel = new JLabel("Projectile Highlighter");
         titleLabel.setForeground(Color.WHITE);
-		titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 18f));
+		titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 14f));
         headerPanel.add(titleLabel, BorderLayout.CENTER);
 
         add(headerPanel, BorderLayout.NORTH);
@@ -73,6 +73,8 @@ public class ProjectileHighlighterPanel extends PluginPanel
         // ----- Groups Section -----
         JPanel groupsSection = new JPanel(new BorderLayout());
         groupsSection.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		groupsSection.setAlignmentX(Component.LEFT_ALIGNMENT);
+		groupsSection.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         JPanel groupsHeader = createSectionHeader("Groups", SECTION_HEADER_COLOR);
 		JButton addGroupBtn = createPlusButton("Create a new projectile group");
@@ -83,27 +85,30 @@ public class ProjectileHighlighterPanel extends PluginPanel
         groupsContainer = new JPanel();
         groupsContainer.setLayout(new BoxLayout(groupsContainer, BoxLayout.Y_AXIS));
         groupsContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		groupsContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        noGroupsLabel = new JLabel("No groups created yet. Click + to add one.");
+        noGroupsLabel = new JLabel("No groups yet. Click + to add.");
         noGroupsLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        noGroupsLabel.setBorder(new EmptyBorder(10, 10, 10, 10));
-		noGroupsLabel.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 13));
+        noGroupsLabel.setBorder(new EmptyBorder(8, 10, 8, 10));
+		noGroupsLabel.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 12));
 
         groupsSection.add(groupsContainer, BorderLayout.CENTER);
         mainContent.add(groupsSection);
 
         // Spacer
-        mainContent.add(Box.createVerticalStrut(15));
+        mainContent.add(Box.createVerticalStrut(8));
 
         // ----- Recent Projectiles Section -----
         JPanel recentSection = new JPanel(new BorderLayout());
         recentSection.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		recentSection.setAlignmentX(Component.LEFT_ALIGNMENT);
+		recentSection.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         JPanel recentHeader = createSectionHeader("Recent Projectiles", RECENT_HEADER_COLOR);
         JButton clearRecentBtn = new JButton("Clear");
         clearRecentBtn.setToolTipText("Clear recent projectiles");
         clearRecentBtn.setMargin(new Insets(1, 4, 1, 4));
-		clearRecentBtn.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+		clearRecentBtn.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 11));
         clearRecentBtn.addActionListener(e -> {
             recentProjectiles.clear();
             refreshRecentList();
@@ -114,17 +119,18 @@ public class ProjectileHighlighterPanel extends PluginPanel
         recentContainer = new JPanel();
         recentContainer.setLayout(new BoxLayout(recentContainer, BoxLayout.Y_AXIS));
         recentContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		recentContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         noRecentLabel = new JLabel("No projectiles seen yet");
         noRecentLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        noRecentLabel.setBorder(new EmptyBorder(10, 10, 10, 10));
-		noRecentLabel.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 13));
+        noRecentLabel.setBorder(new EmptyBorder(8, 10, 8, 10));
+		noRecentLabel.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 12));
 
         recentSection.add(recentContainer, BorderLayout.CENTER);
         mainContent.add(recentSection);
 
         // Add padding at bottom
-        mainContent.add(Box.createVerticalStrut(20));
+        mainContent.add(Box.createVerticalStrut(10));
 
         // Wrap in scroll pane
         JScrollPane scrollPane = new JScrollPane(mainContent);
@@ -145,12 +151,12 @@ public class ProjectileHighlighterPanel extends PluginPanel
     {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        header.setBorder(new EmptyBorder(6, 10, 6, 10));
-        header.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
+        header.setBorder(new EmptyBorder(5, 8, 5, 8));
+        header.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
 
         JLabel label = new JLabel(text);
         label.setForeground(color);
-		label.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+		label.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
         header.add(label, BorderLayout.WEST);
 
         return header;
@@ -204,6 +210,7 @@ public class ProjectileHighlighterPanel extends PluginPanel
 					expanded,
 					isExpanded -> groupExpansionState.put(group.getId(), isExpanded)
 				);
+				groupPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 				groupsContainer.add(groupPanel);
 				rowIndex++;
 			}
@@ -409,14 +416,14 @@ public class ProjectileHighlighterPanel extends PluginPanel
 
 	private static Icon createPlusIcon()
 	{
-		int size = 22;
+		int size = 18;
 		java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(size, size, java.awt.image.BufferedImage.TYPE_INT_ARGB);
 		java.awt.Graphics2D g = image.createGraphics();
 		g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-		g.setStroke(new java.awt.BasicStroke(3.5f, java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND));
+		g.setStroke(new java.awt.BasicStroke(2.8f, java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND));
 		g.setColor(new Color(90, 200, 90));
 		int mid = size / 2;
-		int inset = 5;
+		int inset = 4;
 		g.drawLine(mid, inset, mid, size - inset);
 		g.drawLine(inset, mid, size - inset, mid);
 		g.dispose();
@@ -427,7 +434,7 @@ public class ProjectileHighlighterPanel extends PluginPanel
 	{
 		JButton button = new JButton(PLUS_ICON);
 		button.setToolTipText(tooltip);
-		button.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+		button.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
 		button.setFocusPainted(false);
 		button.setContentAreaFilled(false);
 		button.setOpaque(false);

@@ -9,6 +9,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.function.Consumer;
+import static java.awt.Cursor.HAND_CURSOR;
 
 import static java.awt.RenderingHints.KEY_ANTIALIASING;
 import static java.awt.RenderingHints.VALUE_ANTIALIAS_ON;
@@ -24,47 +25,43 @@ public class RecentProjectilePanel extends JPanel
     public RecentProjectilePanel(RecentProjectile projectile, int rowIndex,
                                   Consumer<RecentProjectile> onAddToGroup)
     {
-        setLayout(new BorderLayout(5, 0));
+        setLayout(new BorderLayout(6, 0));
         Color bgColor = (rowIndex % 2 == 0) ? ROW_COLOR_1 : ROW_COLOR_2;
         setBackground(bgColor);
-        setBorder(new EmptyBorder(6, 8, 6, 8));
-        setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
+        setBorder(new EmptyBorder(5, 8, 5, 6));
+        setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
 
         String displayName = ProjectileNames.getDisplayName(projectile.getProjectileId());
         JLabel nameLabel = new JLabel(projectile.getProjectileId() + ": " + displayName);
         nameLabel.setForeground(Color.WHITE);
-        nameLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+        nameLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
         nameLabel.setHorizontalAlignment(SwingConstants.LEFT);
-        nameLabel.setBorder(new EmptyBorder(0, 4, 0, 0));
         add(nameLabel, BorderLayout.CENTER);
 
         // Right side: Add button
         JButton addBtn = new JButton(PLUS_ICON);
         addBtn.setToolTipText("Add to group");
-        addBtn.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        addBtn.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
         addBtn.setFocusPainted(false);
         addBtn.setContentAreaFilled(false);
         addBtn.setOpaque(false);
+        addBtn.setCursor(Cursor.getPredefinedCursor(HAND_CURSOR));
         addBtn.addActionListener(e -> onAddToGroup.accept(projectile));
-
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        btnPanel.setBackground(bgColor);
-        btnPanel.add(addBtn);
-        add(btnPanel, BorderLayout.EAST);
+        add(addBtn, BorderLayout.EAST);
     }
 
     private static final Icon PLUS_ICON = createPlusIcon();
 
     private static Icon createPlusIcon()
     {
-        int size = 22;
+        int size = 18;
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = image.createGraphics();
         g.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
-        g.setStroke(new BasicStroke(3.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g.setStroke(new BasicStroke(2.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g.setColor(new Color(90, 200, 90));
         int mid = size / 2;
-        int inset = 5;
+        int inset = 4;
         g.drawLine(mid, inset, mid, size - inset);
         g.drawLine(inset, mid, size - inset, mid);
         g.dispose();
