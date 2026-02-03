@@ -437,10 +437,8 @@ public class ProjectileHighlighterPanel extends PluginPanel
 		rowContent.setLayout(new BoxLayout(rowContent, BoxLayout.X_AXIS));
 		rowContent.setOpaque(false);
 
-		// Column 1: Add header
-		JLabel addLabel = new JLabel("+");
-		addLabel.setForeground(new Color(90, 200, 90));
-		addLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+		// Column 1: Add header (use same icon as rows for consistency)
+		JLabel addLabel = new JLabel(RecentProjectilePanel.PLUS_ICON);
 		addLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		rowContent.add(createHeaderFixedWidthPanel(addLabel, RecentProjectilePanel.ADD_COLUMN_WIDTH, headerHeight));
 
@@ -450,17 +448,18 @@ public class ProjectileHighlighterPanel extends PluginPanel
 		// Column 2: ID header
 		JLabel idLabel = new JLabel("ID");
 		idLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-		idLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 10));
+		idLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
 		idLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		rowContent.add(createHeaderFixedWidthPanel(idLabel, RecentProjectilePanel.ID_COLUMN_WIDTH, headerHeight));
 
 		// Separator
 		rowContent.add(createHeaderSeparator(separatorColor, headerHeight));
+		rowContent.add(Box.createHorizontalStrut(6));
 
 		// Column 3: Source header
 		JLabel sourceLabel = new JLabel("Source");
 		sourceLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-		sourceLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 10));
+		sourceLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
 		rowContent.add(sourceLabel);
 
 		headerRow.add(rowContent, BorderLayout.CENTER);

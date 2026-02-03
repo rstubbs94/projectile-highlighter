@@ -27,8 +27,8 @@ public class RecentProjectilePanel extends JPanel
 	public static final int ID_COLUMN_WIDTH = 50;
 	public static final int ROW_HEIGHT = 22;
 
-	private static final Font ID_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 11);
-	private static final Font TEXT_FONT = new Font(Font.SANS_SERIF, Font.PLAIN, 11);
+	private static final Font ID_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
+	private static final Font TEXT_FONT = new Font(Font.SANS_SERIF, Font.PLAIN, 12);
 	private static final Color SEPARATOR_COLOR = new Color(60, 60, 60);
 
 	public RecentProjectilePanel(RecentProjectile projectile, int rowIndex,
@@ -51,6 +51,7 @@ public class RecentProjectilePanel extends JPanel
 		JButton addBtn = new JButton(PLUS_ICON);
 		addBtn.setToolTipText("Add to group");
 		addBtn.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+		addBtn.setMargin(new Insets(0, 0, 0, 0));
 		addBtn.setFocusPainted(false);
 		addBtn.setContentAreaFilled(false);
 		addBtn.setOpaque(false);
@@ -77,6 +78,7 @@ public class RecentProjectilePanel extends JPanel
 
 		// Separator
 		rowContent.add(createSeparator(bgColor));
+		rowContent.add(Box.createHorizontalStrut(6));
 
 		// Column 3: Source (fills remaining space, truncates with ellipsis)
 		String sourceLabel = projectile.getSourceDisplay();
@@ -124,7 +126,7 @@ public class RecentProjectilePanel extends JPanel
 		return sep;
 	}
 
-	private static final Icon PLUS_ICON = createPlusIcon();
+	public static final Icon PLUS_ICON = createPlusIcon();
 
 	private static Icon createPlusIcon()
 	{
