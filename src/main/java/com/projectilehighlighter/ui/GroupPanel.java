@@ -39,10 +39,10 @@ public class GroupPanel extends JPanel
 	private static final Icon SAVE_ICON;
 	private static final Icon PLUS_ICON = createPlusIcon();
 	private static final Icon MINUS_ICON = createMinusIcon();
-	private static final Color PANEL_BG = new Color(30, 30, 30);
-	private static final Color PANEL_BG_ALT = new Color(36, 36, 36);
-	private static final Color HEADER_BG = new Color(40, 40, 40);
-	private static final Color HEADER_BG_ALT = new Color(46, 46, 46);
+private static final Color PANEL_BG = new Color(28, 28, 28);
+private static final Color PANEL_BG_ALT = new Color(34, 34, 34);
+private static final Color HEADER_BG = new Color(40, 40, 40);
+private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 	private static final Color ENTRY_BG = new Color(50, 50, 50);
 	private static final Color ENTRY_BG_ALT = new Color(60, 60, 60);
 
@@ -119,7 +119,7 @@ public class GroupPanel extends JPanel
         JPanel header = new JPanel();
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
         header.setBackground(headerBackground);
-        header.setBorder(new EmptyBorder(4, 6, 4, 6));
+        header.setBorder(new EmptyBorder(6, 8, 4, 8));
 
         // Row 1: Expand arrow + status + name + count
         JPanel row1 = new JPanel();
@@ -143,7 +143,7 @@ public class GroupPanel extends JPanel
 
 		JLabel nameLabel = new JLabel(group.getName());
 		nameLabel.setForeground(Color.WHITE);
-		nameLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15));
+		nameLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 16));
         row1.add(nameLabel);
         row1.add(Box.createHorizontalStrut(4));
 
@@ -167,6 +167,7 @@ public class GroupPanel extends JPanel
         row2.setBackground(headerBackground);
         row2.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+		int spacing = 6;
 		row2.add(Box.createHorizontalGlue());
 
 		Dimension btnSize = new Dimension(40, 28);
@@ -199,12 +200,12 @@ public class GroupPanel extends JPanel
 			}
 		});
 		row2.add(toggleBtn);
-		row2.add(Box.createHorizontalStrut(4));
+		row2.add(Box.createHorizontalStrut(spacing));
 
 		JButton renameBtn = createIconButton(EDIT_ICON, "Rename group");
 		renameBtn.addActionListener(e -> onRename.accept(group));
 		row2.add(renameBtn);
-		row2.add(Box.createHorizontalStrut(4));
+		row2.add(Box.createHorizontalStrut(spacing));
 
 		JButton deleteBtn = createIconButton(MINUS_ICON, "Delete group");
 		deleteBtn.addActionListener(e -> onDelete.accept(group));
@@ -332,7 +333,7 @@ public class GroupPanel extends JPanel
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		panel.setBackground(rowBackground);
-		panel.setBorder(new EmptyBorder(4, 28, 4, 6));
+		panel.setBorder(new EmptyBorder(6, 32, 6, 8));
 		panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Row 1: Color swatch + editable ID/name
@@ -342,9 +343,9 @@ public class GroupPanel extends JPanel
         row1.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		JPanel colorSwatch = new JPanel();
-		colorSwatch.setPreferredSize(new Dimension(14, 14));
-        colorSwatch.setMaximumSize(new Dimension(14, 14));
-        colorSwatch.setMinimumSize(new Dimension(14, 14));
+		colorSwatch.setPreferredSize(new Dimension(16, 16));
+        colorSwatch.setMaximumSize(new Dimension(16, 16));
+        colorSwatch.setMinimumSize(new Dimension(16, 16));
         colorSwatch.setBackground(entry.getColor());
         colorSwatch.setBorder(BorderFactory.createLineBorder(Color.WHITE, 1));
         colorSwatch.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -369,7 +370,7 @@ public class GroupPanel extends JPanel
 		idField.setMaximumSize(new Dimension(64, 20));
 		idField.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 		idField.setForeground(Color.WHITE);
-		idField.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
+		idField.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
 		idField.setEditable(false);
 		idField.setFocusable(false);
 		idField.addActionListener(e -> {
@@ -396,7 +397,10 @@ public class GroupPanel extends JPanel
 		nameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
 		nameField.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
 		nameField.setForeground(Color.WHITE);
-		nameField.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
+		nameField.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createLineBorder(new Color(70, 70, 70)),
+			BorderFactory.createEmptyBorder(2, 6, 2, 6)
+		));
 		nameField.setEditable(false);
 		nameField.setFocusable(false);
 		nameField.addActionListener(e -> {
@@ -420,7 +424,7 @@ public class GroupPanel extends JPanel
         row1.add(Box.createHorizontalGlue());
 
         panel.add(row1);
-        panel.add(Box.createVerticalStrut(3));
+        panel.add(Box.createVerticalStrut(5));
 
         // Row 2: Style dropdown + Name button + Remove button
         JPanel row2 = new JPanel();
