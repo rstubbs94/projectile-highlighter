@@ -35,6 +35,8 @@ public class ProjectileHighlighterPanel extends PluginPanel
 
     static
     {
+        // Icon attribution (Flaticon):
+        // import_icon.png & export_icon.png by Dewi Sari – https://www.flaticon.com/free-icon/import_8765164 / https://www.flaticon.com/free-icon/export_8828334
         BufferedImage importImg = ImageUtil.loadImageResource(ProjectileHighlighterPanel.class, "import_icon.png");
         BufferedImage exportImg = ImageUtil.loadImageResource(ProjectileHighlighterPanel.class, "export_icon.png");
 

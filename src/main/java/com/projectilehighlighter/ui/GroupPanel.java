@@ -298,6 +298,11 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 
 	static
 	{
+		// Icon attribution (Flaticon):
+		// edit_icon.png by Pixel perfect – https://www.flaticon.com/free-icon/edit_1827933
+		// save_icon.png by Freepik – https://www.flaticon.com/free-icon/diskette_2874091
+		// export_icon.png by Dewi Sari – https://www.flaticon.com/free-icon/export_8828334
+		// tile_icon.png by Freepik – https://www.flaticon.com/free-icon/square-hand-drawn-shape-outline_35472
 		BufferedImage visible = ImageUtil.loadImageResource(GroupPanel.class, "visible_icon.png");
 		BufferedImage invisible = ImageUtil.loadImageResource(GroupPanel.class, "invisible_icon.png");
 		BufferedImage edit = ImageUtil.loadImageResource(GroupPanel.class, "edit_icon.png");
