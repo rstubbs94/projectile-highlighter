@@ -157,14 +157,19 @@ public class ProjectileHighlighterPanel extends PluginPanel
         groupsSection.add(groupsContainer, BorderLayout.CENTER);
         mainContent.add(groupsSection);
 
-        // Spacer
-        mainContent.add(Box.createVerticalStrut(8));
+        // Wrap in scroll pane
+        JScrollPane scrollPane = new JScrollPane(mainContent);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        scrollPane.getViewport().setBackground(ColorScheme.DARK_GRAY_COLOR);
+        scrollPane.setBorder(null);
 
-        // ----- Recent Projectiles Section -----
+        add(scrollPane, BorderLayout.CENTER);
+
+        // ----- Recent Projectiles Section (fixed height) -----
         JPanel recentSection = new JPanel(new BorderLayout());
         recentSection.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		recentSection.setAlignmentX(Component.LEFT_ALIGNMENT);
-		recentSection.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         JPanel recentHeader = createSectionHeader("Recent Projectiles", RECENT_HEADER_COLOR);
         JButton clearRecentBtn = new JButton("Clear");
@@ -185,24 +190,17 @@ public class ProjectileHighlighterPanel extends PluginPanel
 
         noRecentLabel = new JLabel("No projectiles seen yet");
         noRecentLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        noRecentLabel.setBorder(new EmptyBorder(8, 10, 8, 10));
+        noRecentLabel.setBorder(new EmptyBorder(0, 0, 0, 0));
 		noRecentLabel.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 12));
 
         recentSection.add(recentContainer, BorderLayout.CENTER);
-        mainContent.add(recentSection);
 
-        // Add padding at bottom
-        mainContent.add(Box.createVerticalStrut(10));
+		int recentHeight = 30 + (RecentProjectilePanel.ROW_HEIGHT * MAX_RECENT_PROJECTILES);
+		recentSection.setPreferredSize(new Dimension(Integer.MAX_VALUE, recentHeight));
+		recentSection.setMinimumSize(new Dimension(0, recentHeight));
+		recentSection.setMaximumSize(new Dimension(Integer.MAX_VALUE, recentHeight));
 
-        // Wrap in scroll pane
-        JScrollPane scrollPane = new JScrollPane(mainContent);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setBackground(ColorScheme.DARK_GRAY_COLOR);
-        scrollPane.getViewport().setBackground(ColorScheme.DARK_GRAY_COLOR);
-        scrollPane.setBorder(null);
-
-        add(scrollPane, BorderLayout.CENTER);
+        add(recentSection, BorderLayout.SOUTH);
 
         // Initial refresh
         refreshGroupsList();
@@ -353,13 +351,18 @@ public class ProjectileHighlighterPanel extends PluginPanel
      * All modifications to recentProjectiles must happen on the EDT to avoid
      * ConcurrentModificationException when the UI is also accessing the map.
      */
-    public void addRecentProjectile(int projectileId)
+    public void addRecentProjectile(int projectileId, String sourceName)
     {
         // Move all map modifications to the EDT to prevent concurrent access issues
         SwingUtilities.invokeLater(() -> {
+            String resolvedSource = (sourceName != null && !sourceName.isEmpty())
+                ? sourceName
+                : "Projectile " + projectileId;
+
             // Update existing or add new
             RecentProjectile recent = RecentProjectile.builder()
                 .projectileId(projectileId)
+                .sourceActorName(resolvedSource)
                 .timestamp(System.currentTimeMillis())
                 .build();
 
@@ -381,10 +384,18 @@ public class ProjectileHighlighterPanel extends PluginPanel
     private void refreshRecentList()
     {
         recentContainer.removeAll();
+		recentContainer.add(createRecentHeaderRow());
 
         if (recentProjectiles.isEmpty())
         {
-            recentContainer.add(noRecentLabel);
+			JPanel emptyWrapper = new JPanel(new BorderLayout());
+			emptyWrapper.setBackground(new Color(35, 35, 35));
+			emptyWrapper.setBorder(new EmptyBorder(6, 12, 6, 6));
+			emptyWrapper.setMinimumSize(new Dimension(0, RecentProjectilePanel.ROW_HEIGHT));
+			emptyWrapper.setPreferredSize(new Dimension(Integer.MAX_VALUE, RecentProjectilePanel.ROW_HEIGHT));
+			emptyWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, RecentProjectilePanel.ROW_HEIGHT));
+			emptyWrapper.add(noRecentLabel, BorderLayout.WEST);
+            recentContainer.add(emptyWrapper);
         }
         else
         {
@@ -408,6 +419,74 @@ public class ProjectileHighlighterPanel extends PluginPanel
         recentContainer.revalidate();
         recentContainer.repaint();
     }
+
+	private JPanel createRecentHeaderRow()
+	{
+		int headerHeight = RecentProjectilePanel.ROW_HEIGHT;
+		Color headerBg = new Color(48, 48, 48);
+		Color separatorColor = new Color(70, 70, 70);
+
+		JPanel headerRow = new JPanel(new BorderLayout());
+		headerRow.setBackground(headerBg);
+		headerRow.setBorder(new EmptyBorder(0, 8, 0, 6));
+		headerRow.setMinimumSize(new Dimension(0, headerHeight));
+		headerRow.setPreferredSize(new Dimension(Integer.MAX_VALUE, headerHeight));
+		headerRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, headerHeight));
+
+		JPanel rowContent = new JPanel();
+		rowContent.setLayout(new BoxLayout(rowContent, BoxLayout.X_AXIS));
+		rowContent.setOpaque(false);
+
+		// Column 1: Add header
+		JLabel addLabel = new JLabel("+");
+		addLabel.setForeground(new Color(90, 200, 90));
+		addLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+		addLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		rowContent.add(createHeaderFixedWidthPanel(addLabel, RecentProjectilePanel.ADD_COLUMN_WIDTH, headerHeight));
+
+		// Separator
+		rowContent.add(createHeaderSeparator(separatorColor, headerHeight));
+
+		// Column 2: ID header
+		JLabel idLabel = new JLabel("ID");
+		idLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		idLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 10));
+		idLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		rowContent.add(createHeaderFixedWidthPanel(idLabel, RecentProjectilePanel.ID_COLUMN_WIDTH, headerHeight));
+
+		// Separator
+		rowContent.add(createHeaderSeparator(separatorColor, headerHeight));
+
+		// Column 3: Source header
+		JLabel sourceLabel = new JLabel("Source");
+		sourceLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		sourceLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 10));
+		rowContent.add(sourceLabel);
+
+		headerRow.add(rowContent, BorderLayout.CENTER);
+		return headerRow;
+	}
+
+	private JPanel createHeaderFixedWidthPanel(JComponent content, int width, int height)
+	{
+		JPanel panel = new JPanel(new GridBagLayout());
+		panel.setOpaque(false);
+		panel.setPreferredSize(new Dimension(width, height));
+		panel.setMinimumSize(new Dimension(width, height));
+		panel.setMaximumSize(new Dimension(width, height));
+		panel.add(content);
+		return panel;
+	}
+
+	private JPanel createHeaderSeparator(Color color, int height)
+	{
+		JPanel sep = new JPanel();
+		sep.setBackground(color);
+		sep.setPreferredSize(new Dimension(1, height - 4));
+		sep.setMinimumSize(new Dimension(1, height - 4));
+		sep.setMaximumSize(new Dimension(1, height - 4));
+		return sep;
+	}
 
     private void showAddToGroupDialog(RecentProjectile projectile)
     {

@@ -171,7 +171,12 @@ public class ProjectileHighlighterPlugin extends Plugin
             // Feed to panel for recent list
             if (panel != null)
             {
-                panel.addRecentProjectile(projectileId);
+                String sourceName = getActorName(projectile.getSourceActor());
+                if (sourceName == null || sourceName.isEmpty())
+                {
+                    sourceName = "Unknown Source";
+                }
+                panel.addRecentProjectile(projectileId, sourceName);
             }
         }
 

@@ -43,4 +43,9 @@ public class RecentProjectile
         String target = targetActorName != null ? targetActorName : "Unknown";
         return source + " -> " + target;
     }
+
+	public String getSourceDisplay()
+	{
+		return sourceActorName != null ? sourceActorName : "Unknown Source";
+	}
 }
