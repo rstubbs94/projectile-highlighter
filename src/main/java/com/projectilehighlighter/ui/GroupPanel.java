@@ -249,6 +249,7 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 	private void buildEntriesPanel()
 	{
         entriesPanel.removeAll();
+		int rowIndex = 0;
 
         if (group.getEntries() == null || group.getEntries().isEmpty())
         {
@@ -261,7 +262,6 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
         }
         else
         {
-			int rowIndex = 0;
             for (ProjectileEntry entry : group.getEntries())
             {
                 JPanel entryPanel = createEntryPanel(entry, rowIndex++);
@@ -269,9 +269,10 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
             }
         }
 
+		Color addRowBackground = (rowIndex % 2 == 0) ? ENTRY_BG : ENTRY_BG_ALT;
 		JPanel addButtonRow = new JPanel();
 		addButtonRow.setLayout(new BoxLayout(addButtonRow, BoxLayout.X_AXIS));
-		addButtonRow.setBackground(ENTRY_BG);
+		addButtonRow.setBackground(addRowBackground);
 		addButtonRow.setBorder(new EmptyBorder(4, 10, 6, 6));
 		addButtonRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
