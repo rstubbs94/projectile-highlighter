@@ -29,6 +29,7 @@ public class ProjectileHighlighterPanel extends PluginPanel
     private static final int MAX_RECENT_PROJECTILES = 10;
     private static final Color SECTION_HEADER_COLOR = new Color(100, 180, 255);
     private static final Color RECENT_HEADER_COLOR = new Color(255, 180, 100);
+	private static final Color ACTION_ICON_COLOR = new Color(200, 200, 200);
 
     private static final Icon IMPORT_ICON;
     private static final Icon EXPORT_ICON;
@@ -40,8 +41,8 @@ public class ProjectileHighlighterPanel extends PluginPanel
         BufferedImage importImg = ImageUtil.loadImageResource(ProjectileHighlighterPanel.class, "import_icon.png");
         BufferedImage exportImg = ImageUtil.loadImageResource(ProjectileHighlighterPanel.class, "export_icon.png");
 
-        BufferedImage importRecolored = recolorImage(importImg, new Color(150, 180, 220));
-        BufferedImage exportRecolored = recolorImage(exportImg, new Color(150, 180, 220));
+        BufferedImage importRecolored = recolorImage(importImg, ACTION_ICON_COLOR);
+        BufferedImage exportRecolored = recolorImage(exportImg, ACTION_ICON_COLOR);
 
         IMPORT_ICON = new ImageIcon(importRecolored);
         EXPORT_ICON = new ImageIcon(exportRecolored);

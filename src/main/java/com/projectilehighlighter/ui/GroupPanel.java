@@ -31,6 +31,7 @@ public class GroupPanel extends JPanel
 {
 	private static final Color ENABLED_COLOR = new Color(80, 200, 80);
 	private static final Color DISABLED_COLOR = new Color(210, 80, 80);
+	private static final Color ACTION_ICON_COLOR = new Color(200, 200, 200);
 	private static final Icon EYE_OPEN_ICON;
 	private static final Icon EYE_OPEN_ICON_HOVER;
 	private static final Icon EYE_CLOSED_ICON;
@@ -308,14 +309,16 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 		BufferedImage save = ImageUtil.loadImageResource(GroupPanel.class, "save_icon.png");
 		BufferedImage export = ImageUtil.loadImageResource(GroupPanel.class, "export_icon.png");
 
-		BufferedImage editRecolored = recolorImage(edit, new Color(200, 200, 200));
-		BufferedImage saveRecolored = recolorImage(save, new Color(140, 210, 160));
-		BufferedImage exportRecolored = recolorImage(export, new Color(150, 180, 220));
+		BufferedImage editRecolored = recolorImage(edit, ACTION_ICON_COLOR);
+		BufferedImage saveRecolored = recolorImage(save, ACTION_ICON_COLOR);
+		BufferedImage exportRecolored = recolorImage(export, ACTION_ICON_COLOR);
+		BufferedImage visibleRecolored = recolorImage(visible, ACTION_ICON_COLOR);
+		BufferedImage invisibleRecolored = recolorImage(invisible, ACTION_ICON_COLOR);
 
-		EYE_OPEN_ICON = new ImageIcon(visible);
-		EYE_OPEN_ICON_HOVER = new ImageIcon(ImageUtil.alphaOffset(visible, 0.5f));
-		EYE_CLOSED_ICON = new ImageIcon(invisible);
-		EYE_CLOSED_ICON_HOVER = new ImageIcon(ImageUtil.alphaOffset(invisible, 0.5f));
+		EYE_OPEN_ICON = new ImageIcon(visibleRecolored);
+		EYE_OPEN_ICON_HOVER = new ImageIcon(ImageUtil.alphaOffset(visibleRecolored, 0.5f));
+		EYE_CLOSED_ICON = new ImageIcon(invisibleRecolored);
+		EYE_CLOSED_ICON_HOVER = new ImageIcon(ImageUtil.alphaOffset(invisibleRecolored, 0.5f));
 		EDIT_ICON = new ImageIcon(editRecolored);
 		SAVE_ICON = new ImageIcon(saveRecolored);
 		EXPORT_ICON = new ImageIcon(exportRecolored);
