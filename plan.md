@@ -11,14 +11,15 @@ A RuneLite plugin that allows players to visually highlight projectiles in-game.
 
 ### Core Features
 - **Projectile Detection**: Automatically detects all projectiles in the game world
-- **Visual Highlighting**: Renders overlays on projectiles using different styles (Hull, Outline, Filled, Tile)
-- **Debug Mode**: Shows projectile IDs on-screen to help identify unknown projectiles
+- **Visual Highlighting**: Renders overlays on projectiles using different styles (Outline, Hull/Filled Outline, Filled, Tile)
+- **Debug Mode**: Shows projectile IDs in chat to help identify unknown projectiles
 - **Group Management**: Organize projectiles into named groups that can be enabled/disabled together
+- **Import/Export**: Share groups via clipboard JSON with format validation
 
 ### Sidebar Panel
-- **Groups Section**: Create, rename, delete, and toggle projectile groups
-- **Recent Projectiles**: Shows recently seen projectiles with ability to add them to groups
-- **Per-Projectile Settings**: Each entry has its own color and overlay style
+- **Groups Section**: Create, rename, delete, toggle, import/export projectile groups
+- **Recent Projectiles**: Table showing recently seen projectiles with quick-add to groups
+- **Per-Projectile Settings**: Each entry has its own color and overlay style (icon buttons)
 
 ### Persistence
 - Groups and settings saved to `~/.runelite/projectile-highlighter/groups.json`
@@ -38,9 +39,9 @@ src/main/java/com/projectilehighlighter/
 ├── ui/
 │   ├── ProjectileHighlighterPanel.java   - Main sidebar panel
 │   ├── GroupPanel.java                   - Expandable group with entries
-│   └── RecentProjectilePanel.java        - Recent projectile row
+│   └── RecentProjectilePanel.java        - Recent projectile table row
 └── util/
-    ├── GroupStorage.java                 - JSON persistence
+    ├── GroupStorage.java                 - JSON persistence with import/export
     └── ProjectileNames.java              - ID to human-readable name mapping
 ```
 
@@ -51,131 +52,87 @@ The sidebar panel has limited horizontal space (~225px). All UI components must 
 ### Groups Section
 ```
 ┌─────────────────────────────────┐
-│ Groups                      [+] │  <- Add new group button
+│ Groups              [⬇][⬆][+]  │  <- Import, Export, Add buttons
 ├─────────────────────────────────┤
-│ ▶ ● Zulrah (3)                  │  <- Collapsed group
-│   [On] [✎] [✕]                  │  <- Buttons on second row
+│ ▶ ● Zulrah (3)  [👁][✎][⬆][−] │  <- Collapsed group with action buttons
 ├─────────────────────────────────┤
-│ ▼ ● Olm (2)                     │  <- Expanded group
-│   [On] [✎] [✕]                  │
+│ ▼ ● Olm (2)     [👁][✎][⬆][−] │  <- Expanded group
 │   ┌─────────────────────────┐   │
-│   │ ■ 1347: Olm Fire        │   │  <- Entry row 1: color + name
-│   │ [Hull ▼] [Name] [−]     │   │  <- Entry row 2: controls
+│   │ ■ [1347] [Olm Fire    ] │   │  <- Color swatch, ID field, name field
+│   │ [◇][▣][■][▦] [✎][−]    │   │  <- Style icons, edit/remove buttons
 │   └─────────────────────────┘   │
-│   [+ Add Projectile]            │
+│   [+]                           │  <- Add new entry
 └─────────────────────────────────┘
 ```
 
-### Recent Projectiles Section
+### Recent Projectiles Section (Table Layout)
 ```
 ┌─────────────────────────────────┐
 │ Recent Projectiles      [Clear] │
 ├─────────────────────────────────┤
-│ ID: 1339                    [+] │
-│ Zulrah Snakeling                │
-│ Zulrah -> You | 5s ago          │
+│ [+] │ ID   │ Source             │  <- Header row
+├─────────────────────────────────┤
+│ [+] │ 1339 │ Zulrah • Snakeling │  <- Data rows (max 10)
+│ [+] │ 1340 │ Zulrah • Magic     │     Source truncates with tooltip
+│ [+] │ 27   │ Unknown Source     │
 └─────────────────────────────────┘
 ```
 
+## Icons
+
+### External Icons (Flaticon - with attribution in code)
+- `import_icon.png` / `export_icon.png` - by Dewi Sari
+- `edit_icon.png` - by Pixel perfect
+- `save_icon.png` - by Freepik
+- `visible_icon.png` / `invisible_icon.png` - eye icons for group toggle
+- `outline_icon.png`, `shaded_icon.png`, `solid_icon.png`, `tile_icon.png` - overlay style icons
+
+### Programmatic Icons
+- Green plus icon - created via Graphics2D (shared between GroupPanel and RecentProjectilePanel)
+- Red minus icon - created via Graphics2D
+
 ---
 
-## TODO
+## Completed Features
 
-### Critical - UI Layout Issues
-- [x] Fix GroupPanel buttons disappearing when group is expanded
-- [x] Fix entry row controls being cut off (dropdown selector)
-- [x] Ensure all UI fits within RuneLite's ~225px sidebar width
-- [x] Reference tick-replay-logger patterns for proper width handling
-
-### UI Improvements
-- [x] Change color picker to match other RuneLite plugins (use RuneLiteColorPicker)
-- [x] Improve UI experience with proper rows and sub-rows layout
-- [x] Add color to UI elements:
-  - Green "+" for add buttons
-  - Red "-" for delete buttons
-  - Colored status indicators
-- [x] Move debug button from panel header to plugin settings toggle
-- [x] Move group action buttons so they align flush to the right
-- [x] Match visual styling from projectile-highlighter reference:
-  - Swap eye icons to the minimalist white/gray set shown in the screenshot
-  - Embed a green "+" button inside the entry list instead of the current "+ Add Projectile" row
-  - Restyle all plus/minus buttons to use the thin red/green bars like the screenshot
-- [x] Simplify recent projectiles list to unique projectile IDs only (no target or timestamp columns)
-- [x] Restore the Groups header "+" button so new groups can be added from the sidebar
-- [x] Replace the eye icons with the exact white/gray set from the provided reference
-- [x] Reduce the width of the overlay-style dropdown so other entry controls retain space
-- [x] Add alternating banding to projectile entry rows for easier scanning
-- [x] Make the entire group header (not only the arrow) toggle expansion for entries
-- [x] Streamline projectile entry creation (instant default add + inline projectile ID editing, no blocking popups)
-
-### Current UI Refinements
-- [x] Fix title header - text drawing over it (remove debug hint text)
-- [x] Change group "Rename" button to an icon (pencil/edit icon)
-- [x] Align projectile entry rename/delete buttons to the right of the row
-- [x] Use external PNG icon for edit button (from Flaticon, recolored to match theme)
-- [x] Remove redundant header "+" button (keep only the one in Groups section)
-- [x] Change green "+" buttons to simple icon style (matching other icons)
-- [x] Widen overlay style dropdown for better readability (72px -> 88px)
-
-### Bug Fixes
-- [x] Fix clicking on group header to expand/collapse entries (wrap left side in clickable panel)
-- [x] Fix projectile entry dropdown selector width to fit contents (80px -> 90px)
-
-### Import/Export Feature
-- [x] Add import/export functionality for groups
-  - Export all: Copy all groups JSON to clipboard (button in Groups header)
-  - Export single: Export individual group via button on each group row
-  - Import: Read groups JSON from clipboard with merge/replace options
-  - Include format identifier/version to validate imported data is for this plugin
-  - Add Export and Import buttons to the Groups section header
-
-### Overlay Style Icon Buttons
-- [x] Replace dropdown selector with icon button group for overlay style selection
-  - Icons to load (from resources): outline_icon.png, shaded_icon.png, solid_icon.png, tile_icon.png
-  - Layout: Horizontal row of 4 icon buttons, left-aligned under the ID field
-  - Order: Outline | Shaded | Solid | Tile
-  - Icon mapping to OverlayStyle enum:
-    - outline_icon.png => OUTLINE
-    - shaded_icon.png => FILLED_OUTLINE (filled outline)
-    - solid_icon.png => FILLED
-    - tile_icon.png => TILE
-  - Visual states:
-    - Selected: Highlighted/indented appearance (brighter background or border)
-    - Unselected: Normal icon appearance (dimmed/grayed)
-    - Only changeable in edit mode (when entry is being edited)
-  - Implementation in GroupPanel.java:
-    1. Add static icon fields: OUTLINE_ICON, SHADED_ICON, SOLID_ICON, TILE_ICON
-    2. Load and recolor icons in static initializer (light gray like other icons)
-    3. Create `createStyleButtonGroup()` method that returns a JPanel with 4 toggle buttons
-    4. Track selected style with button group or manual selection state
-    5. Apply visual feedback (background color change or border) for selected button
-    6. Wire button clicks to update entry.setOverlayStyle() and call onGroupChanged
-    7. Remove the JComboBox<OverlayStyle> dropdown from createEntryRow()
+### UI
+- [x] Expandable/collapsible group panels with entry count
+- [x] Click anywhere on group header to expand/collapse
+- [x] Alternating row colors for visual clarity
+- [x] Inline editing for projectile entries (no blocking popups)
+- [x] Color picker using RuneLite's RuneLiteColorPicker
+- [x] Icon buttons for overlay style selection (Outline, Hull, Filled, Tile)
+- [x] Style icons colored to match projectile color when selected
+- [x] Import/Export buttons with clipboard JSON and format validation
+- [x] Per-group export button
+- [x] Recent projectiles table with fixed column widths
+- [x] Source column truncates with full text in tooltip
+- [x] Consistent icon styling throughout (edit, save, plus, minus, eye, export)
 
 ### Functionality
-- [ ] Verify overlay rendering works correctly for all styles
-- [ ] Test group enable/disable affects overlay correctly
-- [ ] Ensure recent projectiles list updates properly
-- [ ] Verify JSON persistence saves and loads correctly
+- [x] Group enable/disable affects overlay rendering
+- [x] Per-projectile color and overlay style
+- [x] JSON persistence with auto-save
+- [x] Recent projectiles list (max 10, newest first)
+- [x] Debug mode toggle in plugin settings
+- [x] Projectile name lookup from RuneLite's ProjectileID constants
 
-### Code Quality
-- [ ] Ensure thread safety (EDT for UI, game thread for events)
-- [ ] Add proper error handling for edge cases
-- [ ] Clean up any unused code or imports
+---
 
-### Testing
+## Testing Checklist
+
 - [ ] Test with actual in-game projectiles
 - [ ] Test creating/deleting groups
 - [ ] Test adding/removing entries
 - [ ] Test color picker functionality
-- [ ] Test overlay style switching
+- [ ] Test overlay style switching (all 4 styles render correctly)
+- [ ] Test import/export between clients
 - [ ] Test persistence across client restarts
 
-### Future Enhancements (Nice to Have)
-- [x] Import/export groups as JSON (moved to active work)
+## Future Enhancements (Nice to Have)
+
 - [ ] Preset groups for common bosses (Zulrah, CoX, ToB, etc.)
 - [ ] Sound alerts for specific projectiles
 - [ ] Projectile trajectory prediction lines
 
 ---
-

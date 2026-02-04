@@ -866,15 +866,6 @@ private static final Color HEADER_BG_ALT = new Color(48, 48, 48);
 		}
 	}
 
-	private String formatEntryLabel(ProjectileEntry entry)
-    {
-        String custom = entry.getCustomName();
-        String displayName = (custom != null && !custom.isEmpty()) ?
-            custom :
-            ProjectileNames.getDisplayName(entry.getProjectileId());
-        return entry.getProjectileId() + ": " + displayName;
-    }
-
     private void openColorPicker(ProjectileEntry entry, JPanel colorSwatch, JButton[] styleButtons, boolean[] editing)
     {
         RuneliteColorPicker colorPicker = colorPickerManager.create(

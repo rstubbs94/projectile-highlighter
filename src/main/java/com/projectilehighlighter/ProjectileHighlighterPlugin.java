@@ -16,10 +16,6 @@ import net.runelite.api.Player;
 import net.runelite.api.Projectile;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ProjectileMoved;
-import net.runelite.client.chat.ChatColorType;
-import net.runelite.client.chat.ChatMessageBuilder;
-import net.runelite.client.chat.ChatMessageManager;
-import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -29,6 +25,8 @@ import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.components.colorpicker.ColorPickerManager;
 import net.runelite.client.ui.overlay.OverlayManager;
+
+import net.runelite.client.util.ImageUtil;
 
 import javax.inject.Inject;
 import java.awt.Color;
@@ -55,9 +53,6 @@ public class ProjectileHighlighterPlugin extends Plugin
 
     @Inject
     private OverlayManager overlayManager;
-
-    @Inject
-    private ChatMessageManager chatMessageManager;
 
     @Inject
     private ClientToolbar clientToolbar;
@@ -100,10 +95,10 @@ public class ProjectileHighlighterPlugin extends Plugin
         // Create sidebar panel
         panel = new ProjectileHighlighterPanel(groupStorage, config, colorPickerManager);
 
-        // Create navigation button with generated icon (no external file needed)
+        // Create navigation button with icon
         navButton = NavigationButton.builder()
             .tooltip("Projectile Highlighter")
-            .icon(createDefaultIcon())
+            .icon(loadIcon())
             .priority(7)
             .panel(panel)
             .build();
@@ -132,18 +127,26 @@ public class ProjectileHighlighterPlugin extends Plugin
     }
 
     /**
-     * Create a simple default icon if the resource is not found.
+     * Load the panel icon from resources, with fallback to generated icon.
      */
-    private BufferedImage createDefaultIcon()
+    private BufferedImage loadIcon()
     {
-        BufferedImage img = new BufferedImage(18, 18, BufferedImage.TYPE_INT_ARGB);
-        java.awt.Graphics2D g = img.createGraphics();
-        g.setColor(new Color(200, 100, 50));
-        g.fillOval(2, 2, 14, 14);
-        g.setColor(Color.WHITE);
-        g.drawOval(2, 2, 14, 14);
-        g.dispose();
-        return img;
+        try
+        {
+            return ImageUtil.loadImageResource(getClass(), "panel_icon.png");
+        }
+        catch (Exception e)
+        {
+            log.debug("Could not load panel_icon.png, using generated icon");
+            BufferedImage img = new BufferedImage(18, 18, BufferedImage.TYPE_INT_ARGB);
+            java.awt.Graphics2D g = img.createGraphics();
+            g.setColor(new Color(200, 100, 50));
+            g.fillOval(2, 2, 14, 14);
+            g.setColor(Color.WHITE);
+            g.drawOval(2, 2, 14, 14);
+            g.dispose();
+            return img;
+        }
     }
 
     @Subscribe
@@ -161,12 +164,6 @@ public class ProjectileHighlighterPlugin extends Plugin
         if (!processedProjectiles.contains(projectile))
         {
             processedProjectiles.add(projectile);
-
-            // Debug mode: log projectile info to chat
-            if (config.debugMode())
-            {
-                sendDebugMessage(projectile);
-            }
 
             // Feed to panel for recent list
             if (panel != null)
@@ -296,34 +293,6 @@ public class ProjectileHighlighterPlugin extends Plugin
             return ((Player) actor).getName();
         }
         return null;
-    }
-
-    /**
-     * Send a debug message to chat with projectile information.
-     */
-    private void sendDebugMessage(Projectile projectile)
-    {
-        String name = ProjectileNames.getName(projectile.getId());
-        String nameDisplay = name != null ? " (" + name + ")" : "";
-
-        String message = new ChatMessageBuilder()
-            .append(ChatColorType.HIGHLIGHT)
-            .append("[Projectile] ")
-            .append(ChatColorType.NORMAL)
-            .append("ID: ")
-            .append(ChatColorType.HIGHLIGHT)
-            .append(String.valueOf(projectile.getId()))
-            .append(nameDisplay)
-            .append(ChatColorType.NORMAL)
-            .append(" | Target: ")
-            .append(ChatColorType.HIGHLIGHT)
-            .append(projectile.getInteracting() != null ? projectile.getInteracting().getName() : "None")
-            .build();
-
-        chatMessageManager.queue(QueuedMessage.builder()
-            .type(net.runelite.api.ChatMessageType.GAMEMESSAGE)
-            .runeLiteFormattedMessage(message)
-            .build());
     }
 
     /**

@@ -35,7 +35,7 @@ public interface ProjectileHighlighterConfig extends Config
     @ConfigItem(
         keyName = "debugMode",
         name = "Debug Mode",
-        description = "Shows projectile IDs in chat and on overlay to help identify projectiles",
+        description = "Shows projectile IDs on the overlay to help identify projectiles",
         section = generalSection,
         position = 1
     )
@@ -89,6 +89,10 @@ public interface ProjectileHighlighterConfig extends Config
         return new Color(255, 0, 0, 150);
     }
 
+    @Range(
+        min = 1,
+        max = 10
+    )
     @ConfigItem(
         keyName = "outlineWidth",
         name = "Outline Width",
@@ -101,6 +105,10 @@ public interface ProjectileHighlighterConfig extends Config
         return 2;
     }
 
+	@Range(
+		min = 0,
+		max = 255
+	)
 	@ConfigItem(
 		keyName = "fillOpacity",
 		name = "Fill Opacity",

@@ -363,10 +363,9 @@ public class ProjectileHighlighterPanel extends PluginPanel
             RecentProjectile recent = RecentProjectile.builder()
                 .projectileId(projectileId)
                 .sourceActorName(resolvedSource)
-                .timestamp(System.currentTimeMillis())
                 .build();
 
-            // Remove if exists (to move to end/refresh timestamp)
+            // Remove if exists (to move to end and refresh)
             recentProjectiles.remove(projectileId);
             recentProjectiles.put(projectileId, recent);
 
@@ -606,17 +605,6 @@ public class ProjectileHighlighterPanel extends PluginPanel
 		button.setFocusPainted(false);
 		button.setContentAreaFilled(false);
 		button.setOpaque(false);
-		button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		return button;
-	}
-
-	private JButton createSmallTextButton(String text, String tooltip)
-	{
-		JButton button = new JButton(text);
-		button.setToolTipText(tooltip);
-		button.setMargin(new Insets(1, 4, 1, 4));
-		button.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 10));
-		button.setFocusPainted(false);
 		button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		return button;
 	}
