@@ -4,6 +4,7 @@ import com.projectilehighlighter.ProjectileHighlighterConfig;
 import com.projectilehighlighter.model.ProjectileEntry;
 import com.projectilehighlighter.model.ProjectileGroup;
 import com.projectilehighlighter.model.RecentProjectile;
+import com.projectilehighlighter.util.ProjectileColorUtil;
 import com.projectilehighlighter.util.GroupStorage;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
@@ -323,9 +324,10 @@ public class ProjectileHighlighterPanel extends PluginPanel
 
 	private void addProjectileToGroup(ProjectileGroup group)
 	{
+		int projectileId = generateTempProjectileId();
 		ProjectileEntry entry = ProjectileEntry.createDefault(
-			generateTempProjectileId(),
-			config.defaultColor(),
+			projectileId,
+			ProjectileColorUtil.getDefaultColorForProjectile(projectileId, config),
 			config.overlayStyle()
 		);
 		group.addEntry(entry);
@@ -712,9 +714,10 @@ public class ProjectileHighlighterPanel extends PluginPanel
 
 	private ProjectileEntry createEntryFromRecent(RecentProjectile projectile)
 	{
+		int projectileId = projectile.getProjectileId();
 		return ProjectileEntry.createDefault(
-			projectile.getProjectileId(),
-			config.defaultColor(),
+			projectileId,
+			ProjectileColorUtil.getDefaultColorForProjectile(projectileId, config),
 			config.overlayStyle()
 		);
 	}

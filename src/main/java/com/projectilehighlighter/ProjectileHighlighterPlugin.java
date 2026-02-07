@@ -6,6 +6,7 @@ import com.projectilehighlighter.model.ProjectileEntry;
 import com.projectilehighlighter.model.ProjectileGroup;
 import com.projectilehighlighter.ui.ProjectileHighlighterPanel;
 import com.projectilehighlighter.util.GroupStorage;
+import com.projectilehighlighter.util.ProjectileColorUtil;
 import com.projectilehighlighter.util.ProjectileNames;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -197,7 +198,10 @@ public class ProjectileHighlighterPlugin extends Plugin
         // Check if highlight all is enabled
         if (config.highlightAll())
         {
-            return new TrackedProjectileInfo(config.defaultColor(), config.overlayStyle());
+            return new TrackedProjectileInfo(
+                ProjectileColorUtil.getDefaultColorForProjectile(projectileId, config),
+                config.overlayStyle()
+            );
         }
 
         // Check enabled groups for this projectile
@@ -238,6 +242,7 @@ public class ProjectileHighlighterPlugin extends Plugin
             processedProjectiles.clear();
         }
 		else if (event.getKey().equals("highlightAll")
+			|| event.getKey().equals("defaultColorMode")
 			|| event.getKey().equals("defaultColor")
 			|| event.getKey().equals("overlayStyle"))
 		{

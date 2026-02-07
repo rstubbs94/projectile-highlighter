@@ -76,13 +76,25 @@ public interface ProjectileHighlighterConfig extends Config
         return OverlayStyle.HULL;
     }
 
+    @ConfigItem(
+        keyName = "defaultColorMode",
+        name = "Default Color Mode",
+        description = "How projectile default colors are chosen (new entries and highlight-all mode)",
+        section = overlaySection,
+        position = 1
+    )
+    default DefaultColorMode defaultColorMode()
+    {
+        return DefaultColorMode.RANDOM;
+    }
+
     @Alpha
     @ConfigItem(
         keyName = "defaultColor",
         name = "Default Color",
-        description = "Default color for highlighted projectiles",
+        description = "Default color used when color mode is Fixed (alpha is also used in Random mode)",
         section = overlaySection,
-        position = 1
+        position = 2
     )
     default Color defaultColor()
     {
@@ -98,7 +110,7 @@ public interface ProjectileHighlighterConfig extends Config
         name = "Outline Width",
         description = "Width of the outline for hull/outline styles",
         section = overlaySection,
-        position = 2
+        position = 3
     )
     default int outlineWidth()
     {
@@ -114,7 +126,7 @@ public interface ProjectileHighlighterConfig extends Config
 		name = "Fill Opacity",
 		description = "Opacity of the fill color (0-255)",
 		section = overlaySection,
-		position = 3
+		position = 4
 	)
 	default int fillOpacity()
 	{
@@ -130,7 +142,7 @@ public interface ProjectileHighlighterConfig extends Config
 		name = "Debug Text Size",
 		description = "Font size for the projectile ID text that appears in debug mode",
 		section = overlaySection,
-		position = 4
+		position = 5
 	)
 	default int debugTextSize()
 	{
@@ -146,12 +158,31 @@ public interface ProjectileHighlighterConfig extends Config
 		name = "Circle Diameter",
 		description = "Pixel diameter for outline and filled styles",
 		section = overlaySection,
-		position = 5
+		position = 6
 	)
 	default int circleDiameter()
 	{
 		return 20;
 	}
+
+    enum DefaultColorMode
+    {
+        FIXED("Fixed"),
+        RANDOM("Random");
+
+        private final String name;
+
+        DefaultColorMode(String name)
+        {
+            this.name = name;
+        }
+
+        @Override
+        public String toString()
+        {
+            return name;
+        }
+    }
 
     // Overlay style enum
     enum OverlayStyle
