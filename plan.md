@@ -131,11 +131,11 @@ The sidebar panel has limited horizontal space (~225px). All UI components must 
 
 ## Future Enhancements (Nice to Have)
 
-- [ ] Plugin configuration improvement: add a default color mode dropdown (`Fixed` or `Random`), Random is default mode
-- [ ] When `Fixed`, keep the current color picker behavior for new entries
-- [ ] When `Random`, assign projectile colors deterministically using projectile ID as the seed so colors are stable and auto-assigned for entries added from `Recent Projectiles`
-- [ ] Improve projectile source detection: research better source attribution strategies because most sources currently show as unknown
-- [ ] Evaluate proximity-based fallback: when a projectile is first seen, capture the closest entity to the projectile spawn point and use that entity name as source attribution when direct source detection fails
+- [x] Plugin configuration improvement: add a default color mode dropdown (`Fixed` or `Random`), Random is default mode
+- [x] When `Fixed`, keep the current color picker behavior for new entries
+- [x] When `Random`, assign projectile colors deterministically using projectile ID as the seed so colors are stable and auto-assigned for entries added from `Recent Projectiles`
+- [x] Improve projectile source detection: research better source attribution strategies because most sources currently show as unknown
+- [x] Evaluate proximity-based fallback: when a projectile is first seen, capture the closest entity to the projectile spawn point and use that entity name as source attribution when direct source detection fails
 - [ ] Preset groups for common bosses (Zulrah, CoX, ToB, etc.)
 - [ ] Sound alerts for specific projectiles
 - [ ] Projectile trajectory prediction lines

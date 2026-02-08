@@ -15,6 +15,8 @@ import net.runelite.api.Client;
 import net.runelite.api.NPC;
 import net.runelite.api.Player;
 import net.runelite.api.Projectile;
+import net.runelite.api.coords.LocalPoint;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ProjectileMoved;
 import net.runelite.client.config.ConfigManager;
@@ -46,6 +48,9 @@ import java.util.Set;
 )
 public class ProjectileHighlighterPlugin extends Plugin
 {
+    private static final int WORLD_DISTANCE_BIAS_TILES = 1;
+    private static final int LOCAL_DISTANCE_BIAS_UNITS = 128;
+
     @Inject
     private Client client;
 
@@ -169,12 +174,7 @@ public class ProjectileHighlighterPlugin extends Plugin
             // Feed to panel for recent list
             if (panel != null)
             {
-                String sourceName = getActorName(projectile.getSourceActor());
-                if (sourceName == null || sourceName.isEmpty())
-                {
-                    sourceName = "Unknown Source";
-                }
-                panel.addRecentProjectile(projectileId, sourceName);
+                panel.addRecentProjectile(projectileId, resolveSourceName(projectile));
             }
         }
 
@@ -289,15 +289,316 @@ public class ProjectileHighlighterPlugin extends Plugin
         {
             return null;
         }
+
+        String name = null;
         if (actor instanceof NPC)
         {
-            return ((NPC) actor).getName();
+            name = ((NPC) actor).getName();
         }
-        if (actor instanceof Player)
+        else if (actor instanceof Player)
         {
-            return ((Player) actor).getName();
+            name = ((Player) actor).getName();
         }
-        return null;
+
+        return sanitizeActorName(name);
+    }
+
+    private String sanitizeActorName(String name)
+    {
+        if (name == null)
+        {
+            return null;
+        }
+
+        String cleaned = name.replaceAll("<[^>]*>", "").trim();
+        if (cleaned.isEmpty() || cleaned.equalsIgnoreCase("null"))
+        {
+            return null;
+        }
+
+        return cleaned;
+    }
+
+    /**
+     * Resolve a source name for a projectile, with a proximity fallback.
+     * Priority:
+     * 1) Direct source actor from RuneLite API
+     * 2) Closest actor to projectile source/spawn point
+     * 3) Unknown Source
+     */
+    private String resolveSourceName(Projectile projectile)
+    {
+        String sourceName = getActorName(projectile.getSourceActor());
+        if (sourceName != null && !sourceName.isEmpty())
+        {
+            return sourceName;
+        }
+
+        Actor targetActor = projectile.getTargetActor();
+        Actor fallback = null;
+        WorldPoint sourcePoint = projectile.getSourcePoint();
+        if (sourcePoint != null)
+        {
+            fallback = findClosestActorToWorldPoint(sourcePoint, targetActor);
+        }
+
+        if (fallback == null)
+        {
+            LocalPoint sourceLocal = new LocalPoint(projectile.getX1(), projectile.getY1());
+            fallback = findClosestActorToLocalPoint(sourceLocal, targetActor);
+        }
+
+        String fallbackName = getActorName(fallback);
+        if (fallbackName != null && !fallbackName.isEmpty())
+        {
+            return fallbackName;
+        }
+
+        return "Unknown Source";
+    }
+
+    private Actor findClosestActorToWorldPoint(WorldPoint sourcePoint, Actor targetActor)
+    {
+        Candidate npcCandidate = findClosestNpcToWorldPoint(sourcePoint, targetActor);
+        Candidate playerCandidate = findClosestPlayerToWorldPoint(sourcePoint, targetActor);
+        return chooseBestFallbackActor(npcCandidate, playerCandidate, targetActor, WORLD_DISTANCE_BIAS_TILES);
+    }
+
+    private Actor findClosestActorToLocalPoint(LocalPoint sourceLocal, Actor targetActor)
+    {
+        Candidate npcCandidate = findClosestNpcToLocalPoint(sourceLocal, targetActor);
+        Candidate playerCandidate = findClosestPlayerToLocalPoint(sourceLocal, targetActor);
+        return chooseBestFallbackActor(npcCandidate, playerCandidate, targetActor, LOCAL_DISTANCE_BIAS_UNITS);
+    }
+
+    private int getDistanceToWorldPoint(WorldPoint sourcePoint, Actor actor)
+    {
+        if (actor == null)
+        {
+            return Integer.MAX_VALUE;
+        }
+
+        String actorName = getActorName(actor);
+        if (actorName == null || actorName.isEmpty())
+        {
+            return Integer.MAX_VALUE;
+        }
+
+        WorldPoint actorPoint = actor.getWorldLocation();
+        if (actorPoint == null || actorPoint.getPlane() != sourcePoint.getPlane())
+        {
+            return Integer.MAX_VALUE;
+        }
+
+        return actorPoint.distanceTo2D(sourcePoint);
+    }
+
+    private int getDistanceToLocalPoint(LocalPoint sourceLocal, Actor actor)
+    {
+        if (actor == null)
+        {
+            return Integer.MAX_VALUE;
+        }
+
+        String actorName = getActorName(actor);
+        if (actorName == null || actorName.isEmpty())
+        {
+            return Integer.MAX_VALUE;
+        }
+
+        LocalPoint actorPoint = actor.getLocalLocation();
+        if (actorPoint == null)
+        {
+            return Integer.MAX_VALUE;
+        }
+
+        return actorPoint.distanceTo(sourceLocal);
+    }
+
+    private Candidate findClosestNpcToWorldPoint(WorldPoint sourcePoint, Actor excludedActor)
+    {
+        Candidate closest = null;
+        for (NPC npc : client.getNpcs())
+        {
+            if (npc == excludedActor)
+            {
+                continue;
+            }
+
+            int distance = getDistanceToWorldPoint(sourcePoint, npc);
+            if (distance == Integer.MAX_VALUE)
+            {
+                continue;
+            }
+
+            if (closest == null || distance < closest.distance)
+            {
+                closest = new Candidate(npc, distance);
+                if (distance == 0)
+                {
+                    return closest;
+                }
+            }
+        }
+        return closest;
+    }
+
+    private Candidate findClosestPlayerToWorldPoint(WorldPoint sourcePoint, Actor excludedActor)
+    {
+        Candidate closest = null;
+        for (Player player : client.getPlayers())
+        {
+            if (player == excludedActor)
+            {
+                continue;
+            }
+
+            int distance = getDistanceToWorldPoint(sourcePoint, player);
+            if (distance == Integer.MAX_VALUE)
+            {
+                continue;
+            }
+
+            if (closest == null || distance < closest.distance)
+            {
+                closest = new Candidate(player, distance);
+                if (distance == 0)
+                {
+                    return closest;
+                }
+            }
+        }
+        return closest;
+    }
+
+    private Candidate findClosestNpcToLocalPoint(LocalPoint sourcePoint, Actor excludedActor)
+    {
+        Candidate closest = null;
+        for (NPC npc : client.getNpcs())
+        {
+            if (npc == excludedActor)
+            {
+                continue;
+            }
+
+            int distance = getDistanceToLocalPoint(sourcePoint, npc);
+            if (distance == Integer.MAX_VALUE)
+            {
+                continue;
+            }
+
+            if (closest == null || distance < closest.distance)
+            {
+                closest = new Candidate(npc, distance);
+                if (distance == 0)
+                {
+                    return closest;
+                }
+            }
+        }
+        return closest;
+    }
+
+    private Candidate findClosestPlayerToLocalPoint(LocalPoint sourcePoint, Actor excludedActor)
+    {
+        Candidate closest = null;
+        for (Player player : client.getPlayers())
+        {
+            if (player == excludedActor)
+            {
+                continue;
+            }
+
+            int distance = getDistanceToLocalPoint(sourcePoint, player);
+            if (distance == Integer.MAX_VALUE)
+            {
+                continue;
+            }
+
+            if (closest == null || distance < closest.distance)
+            {
+                closest = new Candidate(player, distance);
+                if (distance == 0)
+                {
+                    return closest;
+                }
+            }
+        }
+        return closest;
+    }
+
+    private Actor chooseBestFallbackActor(Candidate npcCandidate, Candidate playerCandidate, Actor targetActor, int biasDistance)
+    {
+        Actor localPlayer = client.getLocalPlayer();
+
+        // If the projectile is targeting us, never attribute source to us unless
+        // there is no other valid candidate.
+        if (targetActor != null
+            && targetActor == localPlayer
+            && playerCandidate != null
+            && playerCandidate.actor == localPlayer)
+        {
+            if (npcCandidate != null)
+            {
+                return npcCandidate.actor;
+            }
+            return null;
+        }
+
+        int npcScore = scoreCandidate(npcCandidate, true, targetActor, localPlayer, biasDistance);
+        int playerScore = scoreCandidate(playerCandidate, false, targetActor, localPlayer, biasDistance);
+
+        if (npcScore == Integer.MAX_VALUE && playerScore == Integer.MAX_VALUE)
+        {
+            return null;
+        }
+
+        if (npcScore <= playerScore)
+        {
+            return npcCandidate != null ? npcCandidate.actor : null;
+        }
+
+        return playerCandidate != null ? playerCandidate.actor : null;
+    }
+
+    private int scoreCandidate(Candidate candidate, boolean npcCandidate, Actor targetActor, Actor localPlayer, int biasDistance)
+    {
+        if (candidate == null)
+        {
+            return Integer.MAX_VALUE;
+        }
+
+        int score = candidate.distance;
+
+        // Slightly favor NPCs when distance is close.
+        if (npcCandidate)
+        {
+            score = Math.max(0, score - biasDistance);
+        }
+
+        // Strongly de-prioritize local player as fallback source.
+        if (!npcCandidate && localPlayer != null && candidate.actor == localPlayer)
+        {
+            score += biasDistance * 6;
+            if (targetActor != null && targetActor == localPlayer)
+            {
+                score += biasDistance * 8;
+            }
+        }
+
+        return score;
+    }
+
+    private static final class Candidate
+    {
+        private final Actor actor;
+        private final int distance;
+
+        private Candidate(Actor actor, int distance)
+        {
+            this.actor = actor;
+            this.distance = distance;
+        }
     }
 
     /**
